@@ -1,6 +1,6 @@
 # Naalora — avancement
 
-Dernière mise à jour : 17 novembre 2026. Voir `README.md` pour l’installation.
+Dernière mise à jour : 17 novembre 2026 (code complet sur GitHub, build vérifié depuis une installation propre). Voir `README.md` pour l’installation.
 
 ## Fait
 
@@ -34,7 +34,7 @@ Toutes les sections du cahier des charges sont codées. Chaque étape passe `npm
 
 1. Créer le cluster MongoDB Atlas M0, renseigner `MONGODB_URI` dans `.env.local`, puis lancer `npm run seed`.
 2. Créer le compte Cloudinary et renseigner les 3 variables `CLOUDINARY_*`.
-3. Déployer sur Vercel avec toutes les variables (dont un `ADMIN_PASSWORD` fort et le vrai `NEXT_PUBLIC_WHATSAPP_NUMBER`), puis connecter naalora.com.
+3. **Vercel : à faire plus tard, dans un autre compte Vercel** (décision du propriétaire — ne pas utiliser le compte Vercel actuellement connecté). Importer le dépôt GitHub `Med-Himri/naalora` et déployer avec toutes les variables (dont un `ADMIN_PASSWORD` fort et le vrai `NEXT_PUBLIC_WHATSAPP_NUMBER`), puis connecter naalora.com.
 4. Tester en réel : une commande, son annulation (le stock doit revenir) et l’envoi d’une photo.
 5. Dans l’admin : ajouter les vraies photos (portrait 4:5), relire puis publier les guides, corriger les textes ci-dessus si besoin.
 6. Après la mise en ligne :

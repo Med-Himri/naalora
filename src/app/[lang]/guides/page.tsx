@@ -10,6 +10,8 @@ import { isLocale } from "@/lib/locales";
 import { fmt, formatDate } from "@/lib/format";
 import { href, paths } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
+import { JsonLd, breadcrumbLd } from "@/lib/jsonld";
+
 
 export const revalidate = 3600;
 
@@ -17,7 +19,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/guides">):
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = getDictionary(lang);
-  return pageMetadata({ lang, path: paths.guides, title: t.meta.guidesTitle, description: t.meta.guidesDescription });
+  return pageMetadata({ lang, path: paths.guides, title: t.meta.guidesTitle, description: t.meta.guidesDescription, og: `/og/page/${lang}/guides` });
 }
 
 export default async function GuidesPage({ params }: PageProps<"/[lang]/guides">) {
@@ -27,6 +29,7 @@ export default async function GuidesPage({ params }: PageProps<"/[lang]/guides">
   const guides = await getPublishedGuides();
   return (
     <div className="container-page pt-6 sm:pt-8">
+      <JsonLd data={breadcrumbLd([{ name: t.breadcrumbHome, url: href(lang) }, { name: t.guides.title, url: href(lang, paths.guides) }])} />
       <Breadcrumbs label={t.a11y.breadcrumb} items={[{ name: t.breadcrumbHome, href: href(lang) }, { name: t.guides.title }]} />
       <header className="mt-5 max-w-3xl">
         <h1 className="text-4xl sm:text-5xl">{t.guides.title}</h1>

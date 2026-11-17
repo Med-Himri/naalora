@@ -13,6 +13,8 @@ import { isLocale } from "@/lib/locales";
 import { href, paths } from "@/lib/routes";
 import { fmt, formatPrice } from "@/lib/format";
 import { pageMetadata } from "@/lib/seo";
+import { JsonLd, organizationLd, websiteLd } from "@/lib/jsonld";
+
 
 export const revalidate = 3600;
 
@@ -20,7 +22,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]">): Promis
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = getDictionary(lang);
-  return pageMetadata({ lang, path: "", title: t.meta.homeTitle, description: t.meta.homeDescription, absoluteTitle: true });
+  return pageMetadata({ lang, path: "", title: t.meta.homeTitle, description: t.meta.homeDescription, absoluteTitle: true, og: `/og/home/${lang}` });
 }
 
 export default async function HomePage({ params }: PageProps<"/[lang]">) {
@@ -36,6 +38,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
   return (
     <>
+      <JsonLd data={[organizationLd(lang), websiteLd(lang)]} />
       {/* Hero */}
       <section className="container-page pt-6 sm:pt-10" aria-labelledby="hero-title">
         <div className="grid items-center gap-8 overflow-hidden rounded-[28px] bg-sand px-5 py-8 sm:px-10 sm:py-12 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:px-14">

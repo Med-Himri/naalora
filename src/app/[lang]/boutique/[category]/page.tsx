@@ -21,6 +21,7 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/[la
     title: fmt(t.meta.categoryTitle, { name: cat.name[lang] }),
     description: cat.intro[lang] || t.meta.shopDescription,
     noindex: hasParams,
+    og: `/og/category/${lang}/${cat.slug}`,
   });
 }
 

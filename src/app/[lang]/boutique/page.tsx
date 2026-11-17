@@ -13,7 +13,7 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/[la
   const t = getDictionary(lang);
   const { hasParams } = parseShopParams(await searchParams);
   // Filtered / sorted URLs: noindex, canonical stays the clean URL.
-  return pageMetadata({ lang, path: paths.shop, title: t.meta.shopTitle, description: t.meta.shopDescription, noindex: hasParams });
+  return pageMetadata({ lang, path: paths.shop, title: t.meta.shopTitle, description: t.meta.shopDescription, noindex: hasParams, og: `/og/page/${lang}/shop` });
 }
 
 export default async function ShopPage({ params, searchParams }: PageProps<"/[lang]/boutique">) {

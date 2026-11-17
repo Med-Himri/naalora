@@ -9,12 +9,14 @@ import { fmt, formatDate } from "@/lib/format";
 import { SITE, whatsappLink } from "@/lib/site";
 import { href, paths } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
+import { JsonLd, breadcrumbLd, faqLd } from "@/lib/jsonld";
+
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/faq">): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = getDictionary(lang);
-  return pageMetadata({ lang, path: paths.faq, title: t.meta.faqTitle, description: t.meta.faqDescription });
+  return pageMetadata({ lang, path: paths.faq, title: t.meta.faqTitle, description: t.meta.faqDescription, og: `/og/page/${lang}/faq` });
 }
 
 export default async function FaqPage({ params }: PageProps<"/[lang]/faq">) {
@@ -23,6 +25,7 @@ export default async function FaqPage({ params }: PageProps<"/[lang]/faq">) {
   const t = getDictionary(lang);
   return (
     <div className="container-page pt-6 sm:pt-8">
+      <JsonLd data={[faqLd(t.faq.items), breadcrumbLd([{ name: t.breadcrumbHome, url: href(lang) }, { name: t.faq.title, url: href(lang, paths.faq) }])]} />
       <Breadcrumbs label={t.a11y.breadcrumb} items={[{ name: t.breadcrumbHome, href: href(lang) }, { name: t.faq.title }]} />
       <div className="mx-auto mt-8 max-w-3xl">
         <h1 className="text-4xl sm:text-5xl">{t.faq.title}</h1>

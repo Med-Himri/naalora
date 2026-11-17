@@ -9,7 +9,9 @@ import { isLocale, locales } from "@/lib/locales";
 import { fmt, formatDate } from "@/lib/format";
 import { renderMarkdown } from "@/lib/markdown";
 import { href, paths } from "@/lib/routes";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, shareImageFrom } from "@/lib/seo";
+import { JsonLd, articleLd, breadcrumbLd } from "@/lib/jsonld";
+
 
 export const revalidate = 3600;
 
@@ -29,7 +31,8 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/guides/[sl
     title: g.title[lang],
     description: g.excerpt[lang],
     type: "article",
-    images: g.cover.url ? [{ url: g.cover.url, alt: g.cover.alt[lang] }] : undefined,
+    images: shareImageFrom(g.cover.url) ? [{ url: shareImageFrom(g.cover.url)!, width: 1200, height: 630, alt: g.cover.alt[lang] }] : undefined,
+    og: `/og/guide/${lang}/${g.slug}`,
   });
 }
 
@@ -45,6 +48,16 @@ export default async function GuidePage({ params }: PageProps<"/[lang]/guides/[s
 
   return (
     <div className="container-page pt-6 sm:pt-8">
+      <JsonLd
+        data={[
+          articleLd(guide, lang, t.guides.author),
+          breadcrumbLd([
+            { name: t.breadcrumbHome, url: href(lang) },
+            { name: t.guides.title, url: href(lang, paths.guides) },
+            { name: guide.title[lang], url: href(lang, paths.guide(guide.slug)) },
+          ]),
+        ]}
+      />
       <Breadcrumbs
         label={t.a11y.breadcrumb}
         items={[{ name: t.breadcrumbHome, href: href(lang) }, { name: t.guides.title, href: href(lang, paths.guides) }, { name: guide.title[lang] }]}

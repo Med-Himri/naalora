@@ -8,12 +8,14 @@ import { fmt } from "@/lib/format";
 import { SITE, whatsappLink } from "@/lib/site";
 import { href, paths } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
+import { JsonLd, breadcrumbLd } from "@/lib/jsonld";
+
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/guide-des-tailles">): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = getDictionary(lang);
-  return pageMetadata({ lang, path: paths.sizeGuide, title: t.meta.sizeGuideTitle, description: t.meta.sizeGuideDescription });
+  return pageMetadata({ lang, path: paths.sizeGuide, title: t.meta.sizeGuideTitle, description: t.meta.sizeGuideDescription, og: `/og/page/${lang}/sizes` });
 }
 
 export default async function SizeGuidePage({ params }: PageProps<"/[lang]/guide-des-tailles">) {
@@ -23,6 +25,7 @@ export default async function SizeGuidePage({ params }: PageProps<"/[lang]/guide
   const cm = (v: number) => fmt(t.sizeGuide.cm, { cm: lang === "fr" ? String(v).replace(".", ",") : String(v) });
   return (
     <div className="container-page pt-6 sm:pt-8">
+      <JsonLd data={breadcrumbLd([{ name: t.breadcrumbHome, url: href(lang) }, { name: t.guides.title, url: href(lang, paths.guides) }, { name: t.sizeGuide.title, url: href(lang, paths.sizeGuide) }])} />
       <Breadcrumbs label={t.a11y.breadcrumb} items={[{ name: t.breadcrumbHome, href: href(lang) }, { name: t.guides.title, href: href(lang, paths.guides) }, { name: t.sizeGuide.title }]} />
       <div className="mx-auto mt-8 max-w-3xl">
         <h1 className="text-4xl sm:text-5xl">{t.sizeGuide.title}</h1>

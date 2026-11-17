@@ -31,6 +31,6 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Everything except Next internals, admin, API, feeds and files with an extension
-  matcher: ["/((?!_next|admin|api|feed|.*\\..*).*)"],
+  // Everything except Next internals, admin, API, feeds, OG images and files with an extension
+  matcher: ["/((?!_next|admin|api|feed|og|.*\\..*).*)"],
 };

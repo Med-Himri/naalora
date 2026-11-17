@@ -4,6 +4,7 @@ import Breadcrumbs from "../ui/Breadcrumbs";
 import { getDictionary } from "@/lib/i18n";
 import { fmt } from "@/lib/format";
 import { href, paths } from "@/lib/routes";
+import { JsonLd, breadcrumbLd } from "@/lib/jsonld";
 import type { Locale } from "@/lib/locales";
 import type { CategoryDTO, GuideDTO, ProductDTO, Tone } from "@/lib/types";
 
@@ -63,6 +64,7 @@ export default function ShopView({ lang, title, intro, basePath, allProducts, ca
 
   return (
     <div className="container-page pt-6 sm:pt-8">
+      <JsonLd data={breadcrumbLd(crumbs.map((c) => ({ name: c.name, url: c.href ?? href(lang, basePath) })))} />
       <Breadcrumbs items={crumbs} label={t.a11y.breadcrumb} />
       <header className="mt-5 max-w-3xl">
         <h1 className="text-4xl sm:text-5xl">{title}</h1>

@@ -8,12 +8,14 @@ import { isLocale } from "@/lib/locales";
 import { SITE, displayPhone, whatsappLink } from "@/lib/site";
 import { href, paths } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
+import { JsonLd, breadcrumbLd, organizationLd } from "@/lib/jsonld";
+
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/a-propos">): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = getDictionary(lang);
-  return pageMetadata({ lang, path: paths.about, title: t.meta.aboutTitle, description: t.meta.aboutDescription });
+  return pageMetadata({ lang, path: paths.about, title: t.meta.aboutTitle, description: t.meta.aboutDescription, og: `/og/page/${lang}/about` });
 }
 
 export default async function AboutPage({ params }: PageProps<"/[lang]/a-propos">) {
@@ -22,6 +24,7 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/a-propos"
   const t = getDictionary(lang);
   return (
     <div className="container-page pt-6 sm:pt-8">
+      <JsonLd data={[organizationLd(lang), breadcrumbLd([{ name: t.breadcrumbHome, url: href(lang) }, { name: t.about.title, url: href(lang, paths.about) }])]} />
       <Breadcrumbs label={t.a11y.breadcrumb} items={[{ name: t.breadcrumbHome, href: href(lang) }, { name: t.about.title }]} />
       <div className="mx-auto mt-8 max-w-3xl">
         <h1 className="text-4xl sm:text-5xl">{t.about.title}</h1>

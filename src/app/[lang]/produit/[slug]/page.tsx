@@ -14,7 +14,9 @@ import { getDictionary } from "@/lib/i18n";
 import { isLocale, locales } from "@/lib/locales";
 import { fmt, formatPrice } from "@/lib/format";
 import { href, paths } from "@/lib/routes";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, shareImageFrom } from "@/lib/seo";
+import { JsonLd, breadcrumbLd, faqLd, productLd } from "@/lib/jsonld";
+
 
 export const revalidate = 3600;
 
@@ -34,7 +36,8 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/produit/[s
     path: paths.product(p.slug),
     title: `${p.name[lang]} — ${formatPrice(p.price, lang)}`,
     description: p.summary[lang],
-    images: img ? [{ url: img.url, width: 800, height: 1000, alt: img.alt[lang] || p.name[lang] }] : undefined,
+    images: shareImageFrom(img?.url) ? [{ url: shareImageFrom(img?.url)!, width: 1200, height: 630, alt: img!.alt[lang] || p.name[lang] }] : undefined,
+    og: `/og/product/${lang}/${p.slug}`,
   });
 }
 
@@ -66,17 +69,23 @@ export default async function ProductPage({ params }: PageProps<"/[lang]/produit
     [t.product.specs.sku, product.sku],
   ].filter(([, v]) => !!v) as [string, string][];
 
+  const crumbs = [
+    { name: t.breadcrumbHome, href: href(lang) },
+    { name: t.shop.title, href: href(lang, paths.shop) },
+    ...(category ? [{ name: category.name[lang], href: href(lang, paths.category(category.slug)) }] : []),
+    { name: product.name[lang], href: href(lang, paths.product(product.slug)) },
+  ];
+
   return (
     <div className="container-page pt-6 sm:pt-8">
-      <Breadcrumbs
-        label={t.a11y.breadcrumb}
-        items={[
-          { name: t.breadcrumbHome, href: href(lang) },
-          { name: t.shop.title, href: href(lang, paths.shop) },
-          ...(category ? [{ name: category.name[lang], href: href(lang, paths.category(category.slug)) }] : []),
-          { name: product.name[lang] },
+      <JsonLd
+        data={[
+          productLd(product, lang, category),
+          breadcrumbLd(crumbs.map((c) => ({ name: c.name, url: c.href }))),
+          faqLd(t.product.faq),
         ]}
       />
+      <Breadcrumbs label={t.a11y.breadcrumb} items={crumbs} />
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-14">
         <div className="lg:sticky lg:top-28 lg:self-start">

@@ -32,8 +32,9 @@ export async function loadGuidesFresh(): Promise<GuideDTO[]> {
   return docs.map(toGuideDTO);
 }
 
-const getCatalog = unstable_cache(loadCatalogFresh, ["naalora-catalog"], { tags: [TAGS.catalog], revalidate: 3600 });
-const getGuidesCached = unstable_cache(loadGuidesFresh, ["naalora-guides"], { tags: [TAGS.guides], revalidate: 3600 });
+// Demo mode: no data cache (the in-memory store resets on restart, the Next cache would not).
+const getCatalog = isDemo ? loadCatalogFresh : unstable_cache(loadCatalogFresh, ["naalora-catalog"], { tags: [TAGS.catalog], revalidate: 3600 });
+const getGuidesCached = isDemo ? loadGuidesFresh : unstable_cache(loadGuidesFresh, ["naalora-guides"], { tags: [TAGS.guides], revalidate: 3600 });
 
 /* ---------- Storefront reads (cached) ---------- */
 

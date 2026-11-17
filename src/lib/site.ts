@@ -1,3 +1,5 @@
+import { FREE_SHIPPING_FROM, SHIPPING_FEE } from "./pricing.ts";
+
 /**
  * Single source of truth for business facts.
  * Pages, FAQ, About, JSON-LD, the Merchant feed and llms.txt all read from here,
@@ -11,8 +13,8 @@ export const SITE = {
   currency: "MAD",
   whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "212600000000").replace(/\D/g, ""),
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "contact@naalora.com",
-  shippingFee: 35,
-  freeShippingFrom: 500,
+  shippingFee: SHIPPING_FEE,
+  freeShippingFrom: FREE_SHIPPING_FROM,
   deliveryDays: { min: 1, max: 3 },
   deliveryHours: { min: 24, max: 72 },
   exchangeDays: 7,

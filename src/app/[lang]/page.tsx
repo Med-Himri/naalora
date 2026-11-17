@@ -7,8 +7,8 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   if (!isLocale(lang)) notFound();
   const t = getDictionary(lang);
   return (
-    <main id="main" className="container-page py-20">
+    <div className="container-page py-20">
       <h1 className="text-4xl">{t.home.title}</h1>
-    </main>
+    </div>
   );
 }

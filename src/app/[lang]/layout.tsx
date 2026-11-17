@@ -6,6 +6,12 @@ import type { Metadata, Viewport } from "next";
 import { defaultLocale, dirOf, isLocale, locales } from "@/lib/locales";
 import { SITE } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n";
+import { whatsappLink } from "@/lib/site";
+import { CartProvider } from "@/components/cart/CartProvider";
+import CartDrawer from "@/components/cart/CartDrawer";
+import SiteHeader from "@/components/layout/SiteHeader";
+import SiteFooter from "@/components/layout/SiteFooter";
+import WhatsAppFloat from "@/components/layout/WhatsAppFloat";
 
 export const dynamicParams = false;
 
@@ -38,14 +44,30 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
   const t = getDictionary(lang);
   return (
     <html lang={lang} dir={dirOf(lang)}>
-      <body className="min-h-dvh">
+      <body className="flex min-h-dvh flex-col">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-paper"
         >
           {t.a11y.skip}
         </a>
-        {children}
+        <CartProvider>
+          <SiteHeader lang={lang} t={{ nav: t.nav, a11y: t.a11y }} whatsappHref={whatsappLink()} />
+          <main id="main" className="min-h-[60vh]">{children}</main>
+          <SiteFooter lang={lang} />
+          <WhatsAppFloat href={whatsappLink()} label={t.whatsappFloat} ariaLabel={t.a11y.whatsapp} />
+          <CartDrawer
+            lang={lang}
+            t={{
+              ...t.cart,
+              closeCart: t.a11y.closeCart,
+              increase: t.a11y.increase,
+              decrease: t.a11y.decrease,
+              quantity: t.product.quantity,
+              removeAria: t.a11y.remove,
+            }}
+          />
+        </CartProvider>
       </body>
     </html>
   );

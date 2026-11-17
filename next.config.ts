@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["mongoose", "cloudinary"],
   experimental: {
-    serverActions: { bodySizeLimit: "8mb" },
     globalNotFound: true,
   },
 };

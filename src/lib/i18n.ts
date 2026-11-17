@@ -357,6 +357,7 @@ const fr = {
     "Salé", "Témara", "Mohammédia", "El Jadida", "Safi", "Béni Mellal", "Nador", "Khouribga", "Settat",
     "Laâyoune", "Essaouira", "Ouarzazate", "Autre",
   ],
+  orderConfirmMessage: `Bonjour {name}, ici Naalora 👋\nNous confirmons votre commande {ref} :\n{items}\nTotal : {total} (paiement à la livraison).\nLivraison à {city} sous ${h.min}–${h.max} h. Merci de votre confiance !`,
   breadcrumbHome: "Accueil",
   whatsappFloat: "Une question ? WhatsApp",
 };
@@ -702,6 +703,7 @@ const ar: Dictionary = {
     "سلا", "تمارة", "المحمدية", "الجديدة", "آسفي", "بني ملال", "الناظور", "خريبكة", "سطات",
     "العيون", "الصويرة", "ورزازات", "أخرى",
   ],
+  orderConfirmMessage: `السلام عليكم {name}، معك Naalora 👋\nنؤكد طلبك {ref}:\n{items}\nالمجموع: {total} (الدفع عند الاستلام).\nالتوصيل إلى {city} خلال ${h.min}–${h.max} ساعة. شكراً لثقتك!`,
   breadcrumbHome: "الرئيسية",
   whatsappFloat: "سؤال؟ واتساب",
 };

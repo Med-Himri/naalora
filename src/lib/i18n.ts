@@ -100,6 +100,8 @@ const fr = {
     faqMore: "Toutes les questions",
     soon: "Bientôt",
     productsCount: "{count} modèles",
+    upcoming: ["Baskets", "Sandales", "Bottes"],
+    heroImageAlt: "Pantoufle plateforme en daim Naalora",
   },
   product: {
     badgeBest: "Best-seller",
@@ -443,6 +445,8 @@ const ar: Dictionary = {
     faqMore: "كل الأسئلة",
     soon: "قريباً",
     productsCount: "{count} موديلات",
+    upcoming: ["أحذية رياضية", "صنادل", "أحذية طويلة"],
+    heroImageAlt: "بلغة Naalora بنعل مرتفع من الجلد السويدي",
   },
   product: {
     badgeBest: "الأكثر مبيعاً",

@@ -1,7 +1,6 @@
-import { FREE_SHIPPING_FROM, SHIPPING_FEE } from "./pricing.ts";
-
 /**
  * Single source of truth for business facts.
+ * (Delivery price is NOT here: it is editable in Admin → Réglages, see getShippingSettings().)
  * Pages, FAQ, About, JSON-LD, the Merchant feed and llms.txt all read from here,
  * so the same facts appear everywhere.
  */
@@ -13,8 +12,6 @@ export const SITE = {
   currency: "MAD",
   whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "212600000000").replace(/\D/g, ""),
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "contact@naalora.com",
-  shippingFee: SHIPPING_FEE,
-  freeShippingFrom: FREE_SHIPPING_FROM,
   deliveryDays: { min: 1, max: 3 },
   deliveryHours: { min: 24, max: 72 },
   exchangeDays: 7,

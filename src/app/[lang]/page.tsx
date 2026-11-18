@@ -8,7 +8,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import FaqList from "@/components/ui/FaqList";
 import { ArrowIcon, SparkIcon } from "@/components/icons";
 import { colorSiblings, getActiveProducts, getCategories, getPublishedGuides, minPrice } from "@/lib/data";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionaryLive } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
 import { href, paths } from "@/lib/routes";
 import { fmt, formatPrice } from "@/lib/format";
@@ -21,14 +21,14 @@ export const revalidate = 3600;
 export async function generateMetadata({ params }: PageProps<"/[lang]">): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
-  const t = getDictionary(lang);
+  const t = await getDictionaryLive(lang);
   return pageMetadata({ lang, path: "", title: t.meta.homeTitle, description: t.meta.homeDescription, absoluteTitle: true, og: `/og/home/${lang}` });
 }
 
 export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  const t = getDictionary(lang);
+  const t = await getDictionaryLive(lang);
   const [products, categories, guides] = await Promise.all([getActiveProducts(), getCategories(), getPublishedGuides()]);
 
   const best = [...products.filter((p) => p.badge === "best"), ...products.filter((p) => p.badge !== "best")].slice(0, 4);

@@ -1,6 +1,7 @@
 import { SITE, absoluteUrl, displayPhone } from "./site";
 import { hreflang, type Locale } from "./locales";
 import type { CategoryDTO, GuideDTO, ProductDTO } from "./types";
+import { hasFreeThreshold, type ShippingSettings } from "./pricing";
 
 /** Server-rendered JSON-LD. "<" is escaped so the content can never close the script tag. */
 export function JsonLd({ data }: { data: object | object[] }) {
@@ -61,7 +62,7 @@ export function faqLd(items: { q: string; a: string }[]) {
   };
 }
 
-export function productLd(p: ProductDTO, lang: Locale, category: CategoryDTO | null) {
+export function productLd(p: ProductDTO, lang: Locale, category: CategoryDTO | null, shipping: ShippingSettings) {
   const inStock = p.sizes.some((s) => s.stock > 0);
   const url = absoluteUrl(`/${lang}/produit/${p.slug}`);
   const days = SITE.deliveryDays;
@@ -96,17 +97,21 @@ export function productLd(p: ProductDTO, lang: Locale, category: CategoryDTO | n
       shippingDetails: [
         {
           "@type": "OfferShippingDetails",
-          shippingRate: { "@type": "MonetaryAmount", value: SITE.shippingFee, currency: SITE.currency },
+          shippingRate: { "@type": "MonetaryAmount", value: shipping.fee, currency: SITE.currency },
           shippingDestination: destination,
           deliveryTime: delivery,
         },
-        {
-          "@type": "OfferShippingDetails",
-          shippingRate: { "@type": "MonetaryAmount", value: 0, currency: SITE.currency },
-          shippingDestination: destination,
-          deliveryTime: delivery,
-          eligibleTransactionVolume: { "@type": "PriceSpecification", minPrice: SITE.freeShippingFrom, priceCurrency: SITE.currency },
-        },
+        ...(hasFreeThreshold(shipping)
+          ? [
+              {
+                "@type": "OfferShippingDetails",
+                shippingRate: { "@type": "MonetaryAmount", value: 0, currency: SITE.currency },
+                shippingDestination: destination,
+                deliveryTime: delivery,
+                eligibleTransactionVolume: { "@type": "PriceSpecification", minPrice: shipping.freeFrom, priceCurrency: SITE.currency },
+              },
+            ]
+          : []),
       ],
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",

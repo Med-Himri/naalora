@@ -9,7 +9,7 @@ import QtyStepper from "../cart/QtyStepper";
 import type { CartItem } from "../cart/cart-store";
 import { CashIcon, CheckIcon } from "../icons";
 import { fmt, formatPrice, type Lang } from "@/lib/format";
-import { MAX_QTY_PER_LINE, shippingFor } from "@/lib/pricing";
+import { MAX_QTY_PER_LINE, shippingFor, type ShippingSettings } from "@/lib/pricing";
 
 type Texts = {
   checkout: {
@@ -22,11 +22,11 @@ type Texts = {
   a11y: { increase: string; decrease: string; quantity: string };
 };
 
-type Props = { lang: Lang; t: Texts; cities: { value: string; label: string }[]; whatsappNumber: string };
+type Props = { lang: Lang; t: Texts; cities: { value: string; label: string }[]; whatsappNumber: string; shippingSettings: ShippingSettings };
 
 type Done = { ref: string; total: number; items: CartItem[]; name: string; city: string };
 
-export default function CheckoutForm({ lang, t, cities, whatsappNumber }: Props) {
+export default function CheckoutForm({ lang, t, cities, whatsappNumber, shippingSettings }: Props) {
   const { items, subtotal, setQty, remove, clear } = useCart();
   const [values, setValues] = useState({ name: "", phone: "", city: "", address: "", note: "" });
   const [done, setDone] = useState<Done | null>(null);
@@ -92,7 +92,7 @@ export default function CheckoutForm({ lang, t, cities, whatsappNumber }: Props)
     );
   }
 
-  const shipping = shippingFor(subtotal);
+  const shipping = shippingFor(subtotal, shippingSettings);
   const set = (k: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setValues((v) => ({ ...v, [k]: e.target.value }));
   const err = (k: "name" | "phone" | "city" | "address") =>

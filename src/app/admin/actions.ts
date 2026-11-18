@@ -2,17 +2,19 @@
 
 import { redirect, unstable_rethrow } from "next/navigation";
 import { headers } from "next/headers";
-import { updateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { TAGS } from "@/lib/data";
 import { checkPassword, createSession, destroySession, isAdmin, adminEnabled } from "@/lib/admin/auth";
 import { parseCategory, parseGuide, parseProduct, str, type FieldErrors } from "@/lib/admin/forms";
 import {
   AdminError, addProductImage, createCategory, moveCategory, moveProductImage, removeProductImage, saveGuide, saveProduct,
   setGuideCover, setGuidePublished, setOrderStatus, setProductActive, setProductImageAlt, updateCategory, ORDER_STATUS_VALUES,
+  deleteProduct, saveShippingSettings,
 } from "@/lib/admin/repo";
 import { cloudinaryConfigured, destroyImage, isOwnUpload, signUpload, type Folder } from "@/lib/admin/cloudinary";
 import { rateLimit } from "@/lib/rate-limit";
-import { loadCatalogFresh } from "@/lib/data";
+import { shippingTexts } from "@/lib/i18n";
+import { loadCatalogFresh, loadShippingFresh } from "@/lib/data";
 import { draftProduct, type ProductDraft } from "@/lib/ai/product-draft";
 import { groqConfigured, GroqError, type Attempt } from "@/lib/ai/groq";
 import type { OrderStatus } from "@/lib/types";
@@ -33,8 +35,16 @@ async function guard<T>(fn: () => Promise<T>): Promise<T | AdminResult> {
   }
 }
 
-const catalogChanged = () => updateTag(TAGS.catalog);
-const guidesChanged = () => updateTag(TAGS.guides);
+// Data cache tag + every public page (they are pre-built), so admin changes show immediately.
+const refreshSite = () => revalidatePath("/", "layout");
+const catalogChanged = () => {
+  updateTag(TAGS.catalog);
+  refreshSite();
+};
+const guidesChanged = () => {
+  updateTag(TAGS.guides);
+  refreshSite();
+};
 
 /* ---------- Auth ---------- */
 
@@ -193,8 +203,9 @@ export async function generateProductDraftAction(input: { note: string; image: s
   if (!groqConfigured()) return { ok: false, message: "L’assistant IA n’est pas configuré : ajoutez GROQ_API_KEY sur le serveur." };
   if (!rateLimit("ai-draft", 30, 10 * 60 * 1000)) return { ok: false, message: "Trop de demandes. Réessayez dans quelques minutes." };
   try {
-    const { categories } = await loadCatalogFresh();
+    const [{ categories }, shipping] = await Promise.all([loadCatalogFresh(), loadShippingFresh()]);
     const res = await draftProduct({
+      shippingSentence: shippingTexts("fr", shipping).shipSentence,
       note: String(input?.note ?? ""),
       image: typeof input?.image === "string" ? input.image : null,
       categories: categories.map((c) => ({ slug: c.slug, name: c.name.fr })),
@@ -207,4 +218,42 @@ export async function generateProductDraftAction(input: { note: string; image: s
     console.error("[admin/ai]", message);
     return { ok: false, message, attempts };
   }
+}
+
+/* ---------- Delete product ---------- */
+
+export async function deleteProductAction(fd: FormData): Promise<void> {
+  if (!(await isAdmin())) redirect("/admin");
+  const id = str(fd, "id", 64);
+  try {
+    const publicIds = await deleteProduct(id);
+    await Promise.all(publicIds.map(destroyImage));
+  } catch (err) {
+    if (!(err instanceof AdminError)) console.error("[admin] delete product", err);
+  }
+  catalogChanged();
+  redirect("/admin/produits?deleted=1");
+}
+
+/* ---------- Settings: delivery ---------- */
+
+export async function saveShippingAction(_prev: AdminResult | null, fd: FormData): Promise<AdminResult> {
+  return guard(async () => {
+    const mode = str(fd, "mode", 10);
+    if (mode === "free") {
+      await saveShippingSettings({ fee: 0, freeFrom: null });
+    } else {
+      const fee = Number(str(fd, "fee", 10));
+      const freeRaw = str(fd, "freeFrom", 10);
+      const freeFrom = freeRaw === "" ? null : Number(freeRaw);
+      const errors: Record<string, string> = {};
+      if (!Number.isInteger(fee) || fee < 1 || fee > 10000) errors.fee = "Prix de livraison invalide (nombre entier en MAD, au moins 1).";
+      if (freeFrom !== null && (!Number.isInteger(freeFrom) || freeFrom < 1 || freeFrom > 1000000)) errors.freeFrom = "Montant invalide (nombre entier en MAD) — laissez vide pour aucun seuil.";
+      if (Object.keys(errors).length) return FAIL("Corrigez les champs en rouge.", errors);
+      await saveShippingSettings({ fee, freeFrom });
+    }
+    updateTag(TAGS.settings);
+    refreshSite();
+    return OK("Livraison enregistrée. Le site est à jour.");
+  }) as Promise<AdminResult>;
 }

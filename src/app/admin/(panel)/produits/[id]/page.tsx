@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ProductForm from "@/components/admin/ProductForm";
 import ImageManager from "@/components/admin/ImageManager";
+import DeleteProductButton from "@/components/admin/DeleteProductButton";
 import { Section } from "@/components/admin/fields";
 import { loadCatalogFresh } from "@/lib/data";
 
@@ -26,6 +27,9 @@ export default async function EditProductPage({ params, searchParams }: { params
         <ImageManager productId={product.id} images={product.images} defaultAlt={product.name} />
       </Section>
       <ProductForm product={product} categories={categories} />
+      <div className="flex justify-end border-t border-line pt-4">
+        <DeleteProductButton id={product.id} name={product.name.fr} withLabel />
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { getActiveProducts, getCategories } from "@/lib/data";
+import { getActiveProducts, getCategories, getShippingSettings } from "@/lib/data";
+import { shippingFor } from "@/lib/pricing";
 import { SITE, absoluteUrl } from "@/lib/site";
 import { locales } from "@/lib/locales";
 import { getDictionary } from "@/lib/i18n";
@@ -16,7 +17,7 @@ function feedImage(url: string, fallback: string): string {
 
 /** RSS 2.0 product feed for Google Merchant Center — every active product in French and Arabic. */
 export async function GET() {
-  const [products, categories] = await Promise.all([getActiveProducts(), getCategories()]);
+  const [products, categories, shipping] = await Promise.all([getActiveProducts(), getCategories(), getShippingSettings()]);
   const items = products.flatMap((p) =>
     locales.map((lang) => {
       const inStock = p.sizes.some((s) => s.stock > 0);
@@ -46,7 +47,7 @@ ${onSale ? `      <g:sale_price>${money(p.price)}</g:sale_price>\n` : ""}      <
       <g:target_country>${SITE.country}</g:target_country>
       <g:shipping>
         <g:country>${SITE.country}</g:country>
-        <g:price>${money(p.price >= SITE.freeShippingFrom ? 0 : SITE.shippingFee)}</g:price>
+        <g:price>${money(shippingFor(p.price, shipping))}</g:price>
         <g:min_handling_time>0</g:min_handling_time>
         <g:max_handling_time>1</g:max_handling_time>
         <g:min_transit_time>${SITE.deliveryDays.min}</g:min_transit_time>

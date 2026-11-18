@@ -3,7 +3,8 @@ import { randomInt } from "node:crypto";
 import mongoose from "mongoose";
 import { connectDB, isDemo } from "./db";
 import { demoStore } from "./demo-store";
-import { shippingFor } from "./pricing";
+import { shippingFor, type ShippingSettings } from "./pricing";
+import { loadShippingFresh } from "./data";
 import { isObjectId } from "./validation";
 import { Order, Product } from "@/models";
 import type { Locale } from "./locales";
@@ -30,9 +31,9 @@ export function newRef(): string {
 
 type Built = { items: OrderDTO["items"]; subtotal: number; shipping: number; total: number };
 
-function totals(items: OrderDTO["items"]): Omit<Built, "items"> {
+function totals(items: OrderDTO["items"], s: ShippingSettings): Omit<Built, "items"> {
   const subtotal = items.reduce((n, i) => n + i.unitPrice * i.qty, 0);
-  const shipping = shippingFor(subtotal);
+  const shipping = shippingFor(subtotal, s);
   return { subtotal, shipping, total: subtotal + shipping };
 }
 
@@ -42,10 +43,11 @@ function totals(items: OrderDTO["items"]): Omit<Built, "items"> {
  * if any line fails, nothing is written and an OrderProblemError lists the lines.
  */
 export async function createOrder(lines: OrderLineInput[], customer: CustomerInput, locale: Locale): Promise<{ ref: string; total: number; built: Built }> {
-  return isDemo ? createDemoOrder(lines, customer, locale) : createDbOrder(lines, customer, locale);
+  const shipping = await loadShippingFresh();
+  return isDemo ? createDemoOrder(lines, customer, locale, shipping) : createDbOrder(lines, customer, locale, shipping);
 }
 
-async function createDbOrder(lines: OrderLineInput[], customer: CustomerInput, locale: Locale) {
+async function createDbOrder(lines: OrderLineInput[], customer: CustomerInput, locale: Locale, shippingSettings: ShippingSettings) {
   await connectDB();
   const ids = lines.map((l) => l.productId);
   if (!ids.every(isObjectId)) {
@@ -88,7 +90,7 @@ async function createDbOrder(lines: OrderLineInput[], customer: CustomerInput, l
 
         if (problems.length) throw new OrderProblemError(problems); // aborts the transaction
 
-        const t = totals(items);
+        const t = totals(items, shippingSettings);
         await Order.create(
           [
             {
@@ -118,7 +120,7 @@ async function createDbOrder(lines: OrderLineInput[], customer: CustomerInput, l
   throw new Error("Could not generate a unique order reference");
 }
 
-function createDemoOrder(lines: OrderLineInput[], customer: CustomerInput, locale: Locale) {
+function createDemoOrder(lines: OrderLineInput[], customer: CustomerInput, locale: Locale, shippingSettings: ShippingSettings) {
   const store = demoStore();
   const problems: Problem[] = [];
   for (const line of lines) {
@@ -135,7 +137,7 @@ function createDemoOrder(lines: OrderLineInput[], customer: CustomerInput, local
     p.sizes.find((s) => s.size === line.size)!.stock -= line.qty;
     return { productId: p.id, slug: p.slug, name: p.name.fr, size: line.size, qty: line.qty, unitPrice: p.price };
   });
-  const t = totals(items);
+  const t = totals(items, shippingSettings);
   let ref = newRef();
   while (store.orders.some((o) => o.ref === ref)) ref = newRef();
   store.orders.unshift({

@@ -4,7 +4,8 @@ import { connectDB, isDemo } from "../db";
 import { demoStore } from "../demo-store";
 import { toOrderDTO } from "../mappers";
 import { isObjectId } from "../validation";
-import { Category, Guide, Order, Product } from "@/models";
+import { Category, Guide, Order, Product, Settings } from "@/models";
+import type { ShippingSettings } from "../pricing";
 import type { CategoryInput, GuideInput, ProductInput } from "./forms";
 import type { L10n, OrderDTO, OrderStatus, ProductImageDTO } from "../types";
 
@@ -327,4 +328,34 @@ export async function setGuideCover(id: string, cover: { url: string; publicId: 
   if (!g) throw new AdminError("Guide introuvable.");
   await Guide.updateOne({ _id: id }, { $set: { "cover.url": next.url, "cover.publicId": next.publicId } });
   return g.cover?.publicId ?? "";
+}
+
+/* ===================== Delete product ===================== */
+
+/** Deletes a product and returns its Cloudinary publicIds (to delete there too). Past orders keep their own copy. */
+export async function deleteProduct(id: string): Promise<string[]> {
+  assertId(id);
+  if (isDemo) {
+    const s = demoStore();
+    const p = s.products.find((x) => x.id === id);
+    if (!p) throw new AdminError("Produit introuvable.");
+    s.products = s.products.filter((x) => x.id !== id);
+    return p.images.map((i) => i.publicId).filter(Boolean);
+  }
+  await connectDB();
+  const p = await Product.findById(id).select("images").lean();
+  if (!p) throw new AdminError("Produit introuvable.");
+  await Product.deleteOne({ _id: id });
+  return (p.images ?? []).map((i) => i.publicId ?? "").filter(Boolean);
+}
+
+/* ===================== Store settings ===================== */
+
+export async function saveShippingSettings(s: ShippingSettings): Promise<void> {
+  if (isDemo) {
+    demoStore().shipping = { ...s };
+    return;
+  }
+  await connectDB();
+  await Settings.updateOne({ key: "main" }, { $set: { shippingFee: s.fee, freeShippingFrom: s.freeFrom } }, { upsert: true });
 }

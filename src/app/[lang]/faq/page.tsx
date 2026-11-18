@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import FaqList from "@/components/ui/FaqList";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionaryLive } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
 import { fmt, formatDate } from "@/lib/format";
 import { SITE, whatsappLink } from "@/lib/site";
@@ -14,14 +14,14 @@ import { JsonLd, breadcrumbLd, faqLd } from "@/lib/jsonld";
 export async function generateMetadata({ params }: PageProps<"/[lang]/faq">): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
-  const t = getDictionary(lang);
+  const t = await getDictionaryLive(lang);
   return pageMetadata({ lang, path: paths.faq, title: t.meta.faqTitle, description: t.meta.faqDescription, og: `/og/page/${lang}/faq` });
 }
 
 export default async function FaqPage({ params }: PageProps<"/[lang]/faq">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  const t = getDictionary(lang);
+  const t = await getDictionaryLive(lang);
   return (
     <div className="container-page pt-6 sm:pt-8">
       <JsonLd data={[faqLd(t.faq.items), breadcrumbLd([{ name: t.breadcrumbHome, url: href(lang) }, { name: t.faq.title, url: href(lang, paths.faq) }])]} />

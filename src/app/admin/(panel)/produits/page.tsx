@@ -3,11 +3,12 @@ import Link from "next/link";
 import { loadCatalogFresh, totalStock } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { toggleProductActive } from "../../actions";
+import DeleteProductButton from "@/components/admin/DeleteProductButton";
 
 export const metadata = { title: "Produits" };
 
-export default async function AdminProductsPage() {
-  const { products, categories } = await loadCatalogFresh();
+export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
+  const [{ products, categories }, sp] = await Promise.all([loadCatalogFresh(), searchParams]);
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -17,6 +18,7 @@ export default async function AdminProductsPage() {
           <Link href="/admin/produits/nouveau" className="btn btn-outline">+ Nouveau produit</Link>
         </div>
       </div>
+      {sp.deleted && <p role="status" className="mt-4 rounded-2xl bg-success/10 px-4 py-3 text-sm font-medium text-success">Produit supprimé.</p>}
       {categories.length === 0 && (
         <div className="mt-4 rounded-2xl bg-sand p-4 text-sm">
           <p className="font-semibold">La base de données est vide.</p>
@@ -54,6 +56,7 @@ export default async function AdminProductsPage() {
                 </button>
               </form>
               <Link href={`/admin/produits/${p.id}`} className="btn btn-outline !min-h-10 !py-2 text-sm">Modifier</Link>
+              <DeleteProductButton id={p.id} name={p.name.fr} />
             </li>
           );
         })}

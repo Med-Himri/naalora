@@ -8,6 +8,7 @@ const TABS = [
   { href: "/admin/produits", label: "Produits" },
   { href: "/admin/categories", label: "Catégories" },
   { href: "/admin/guides", label: "Guides" },
+  { href: "/admin/reglages", label: "Réglages" },
 ];
 
 export default function AdminNav() {

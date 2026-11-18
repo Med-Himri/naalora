@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import CheckoutForm from "@/components/checkout/CheckoutForm";
 import { cityOptions, getDictionary } from "@/lib/i18n";
+import { getShippingSettings } from "@/lib/data";
 import { isLocale } from "@/lib/locales";
 import { SITE } from "@/lib/site";
 import { paths } from "@/lib/routes";
@@ -24,6 +25,7 @@ export default async function CheckoutPage({ params }: PageProps<"/[lang]/comman
       <CheckoutForm
         lang={lang}
         cities={cityOptions(lang)}
+        shippingSettings={await getShippingSettings()}
         whatsappNumber={SITE.whatsapp}
         t={{
           checkout: t.checkout,

@@ -1,5 +1,5 @@
-import { getActiveProducts, getCategories, getPublishedGuides } from "@/lib/data";
-import { getDictionary } from "@/lib/i18n";
+import { getActiveProducts, getCategories, getPublishedGuides, getShippingSettings } from "@/lib/data";
+import { getDictionaryLive, shippingTexts } from "@/lib/i18n";
 import { SITE, absoluteUrl, displayPhone } from "@/lib/site";
 import { formatPrice } from "@/lib/format";
 
@@ -7,8 +7,8 @@ export const revalidate = 3600;
 
 /** llms.txt — a short, factual summary for AI assistants (same facts as the pages and JSON-LD). */
 export async function GET() {
-  const [products, categories, guides] = await Promise.all([getActiveProducts(), getCategories(), getPublishedGuides()]);
-  const fr = getDictionary("fr");
+  const [products, categories, guides, shipping] = await Promise.all([getActiveProducts(), getCategories(), getPublishedGuides(), getShippingSettings()]);
+  const fr = await getDictionaryLive("fr");
   const prices = products.map((p) => p.price);
   const min = Math.min(...prices);
   const max = Math.max(...prices);
@@ -23,7 +23,7 @@ export async function GET() {
     "",
     "## Faits clés",
     `- Livraison : partout au Maroc, en ${h.min}–${h.max} h (${d.min} à ${d.max} jours).`,
-    `- Frais de livraison : ${formatPrice(SITE.shippingFee, "fr")}, offerts dès ${formatPrice(SITE.freeShippingFrom, "fr")} d’achat.`,
+    `- Livraison : ${shippingTexts("fr", shipping).shipSentence}`,
     "- Paiement : en espèces à la livraison (pas de paiement par carte en ligne).",
     `- Échange de taille : gratuit pendant ${SITE.exchangeDays} jours après réception (article non porté, emballage d’origine).`,
     `- Pointures : ${SITE.sizeChart.map((r) => `${r.size} = ${String(r.cm).replace(".", ",")} cm`).join(", ")}. Entre deux tailles : prendre la taille au-dessus.`,

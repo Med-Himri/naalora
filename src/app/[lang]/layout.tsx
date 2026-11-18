@@ -6,6 +6,7 @@ import type { Metadata, Viewport } from "next";
 import { defaultLocale, dirOf, isLocale, locales } from "@/lib/locales";
 import { SITE } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n";
+import { getShippingSettings } from "@/lib/data";
 import { CartProvider } from "@/components/cart/CartProvider";
 import CartDrawer from "@/components/cart/CartDrawer";
 import SiteHeader from "@/components/layout/SiteHeader";
@@ -44,6 +45,7 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
   const { lang: raw } = await params;
   const lang = isLocale(raw) ? raw : defaultLocale;
   const t = getDictionary(lang);
+  const shippingSettings = await getShippingSettings();
   // suppressHydrationWarning: browser extensions (Grammarly…) add attributes to <html>/<body> before React loads.
   return (
     <html lang={lang} dir={dirOf(lang)} data-theme="light" data-scroll-behavior="smooth" suppressHydrationWarning>
@@ -65,6 +67,7 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
           <DevStatus />
           <CartDrawer
             lang={lang}
+            shippingSettings={shippingSettings}
             t={{
               ...t.cart,
               closeCart: t.a11y.closeCart,

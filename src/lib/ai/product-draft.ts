@@ -25,12 +25,12 @@ export type ProductDraft = {
 const TONES: Tone[] = ["brown", "pastel", "dark", "other"];
 const h = SITE.deliveryHours;
 
-function systemPrompt(categories: { slug: string; name: string }[]): string {
+function systemPrompt(categories: { slug: string; name: string }[], shippingSentence: string): string {
   return `Tu es le rédacteur e-commerce de ${SITE.name}, boutique de chaussures en ligne basée à ${SITE.city.fr} (Maroc).
 Tu rédiges la fiche d’UN produit (une seule couleur) en français ET en arabe standard simple, compréhensible au Maroc.
 
 Faits de la boutique (à utiliser tels quels, ne pas en inventer d’autres) :
-- Livraison partout au Maroc en ${h.min}–${h.max} h ; frais ${SITE.shippingFee} MAD, offerts dès ${SITE.freeShippingFrom} MAD.
+- Livraison partout au Maroc en ${h.min}–${h.max} h. ${shippingSentence}
 - Paiement en espèces à la livraison. Échange de taille gratuit ${SITE.exchangeDays} jours.
 
 Règles :
@@ -105,11 +105,11 @@ function parseDraft(data: unknown, categorySlugs: string[]): ProductDraft {
 const IMAGE_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 export const MAX_IMAGE_CHARS = 1_400_000; // ~1 MB image (the browser shrinks photos before sending)
 
-export async function draftProduct(input: { note: string; image: string | null; categories: { slug: string; name: string }[] }) {
+export async function draftProduct(input: { note: string; image: string | null; categories: { slug: string; name: string }[]; shippingSentence: string }) {
   const note = text(input.note, 1500);
   const image = input.image && input.image.length <= MAX_IMAGE_CHARS && IMAGE_RE.test(input.image) ? input.image : null;
   if (!note && !image) throw new Error("Ajoutez une photo ou une note.");
-  const sys = systemPrompt(input.categories);
+  const sys = systemPrompt(input.categories, input.shippingSentence);
   const noteText = note ? `Note du vendeur : ${note}` : "Pas de note : décris le produit d’après la photo.";
 
   return generateJson<ProductDraft>(

@@ -30,6 +30,10 @@ Toutes les sections du cahier des charges sont codées. Chaque étape passe `npm
 
 - **Assistant IA (Groq) pour ajouter un produit** : photo et/ou note → fiche FR/AR pré-remplie dans le formulaire. 3 modèles en secours (`qwen/qwen3.8-27b` → `openai/gpt-oss-120b` → `openai/gpt-oss-20b`, configurables par `GROQ_MODELS`). Testé avec la vraie API Groq : création d’un produit avec photo (2,7 s) et bascule automatique quand le 1er modèle est en panne.
 
+- **Livraison réglable dans l’admin (onglet Réglages)** : gratuite par défaut, ou payante avec seuil de gratuité facultatif. Le réglage est enregistré en base (collection `settings`) et s’applique partout : panier, commande (calcul serveur), textes FR/AR (fiches, FAQ, À propos, badges), JSON-LD, flux Merchant et `llms.txt`.
+- **Suppression de produit** (icône corbeille dans la liste + bouton sur la fiche, avec confirmation) : supprime aussi les photos Cloudinary ; les commandes passées gardent leur copie.
+- Après chaque modification dans l’admin, tout le site est régénéré (les changements sont visibles immédiatement).
+
 ## En cours / non vérifié
 
 - **MongoDB réel non testé** : aucun MongoDB n’était disponible pendant le développement. Le seed, la transaction de commande et les écritures de l’admin sur MongoDB n’ont été vérifiés que par TypeScript. Le même parcours a été testé de bout en bout en mode démo.

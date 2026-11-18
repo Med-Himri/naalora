@@ -7,15 +7,15 @@ import { useCart } from "./CartProvider";
 import QtyStepper from "./QtyStepper";
 import { CloseIcon, BagIcon, TruckIcon } from "../icons";
 import { fmt, formatPrice, type Lang } from "@/lib/format";
-import { FREE_SHIPPING_FROM, MAX_QTY_PER_LINE, shippingFor } from "@/lib/pricing";
+import { hasFreeThreshold, MAX_QTY_PER_LINE, shippingFor, type ShippingSettings } from "@/lib/pricing";
 
 export type CartTexts = {
   title: string; empty: string; emptyCta: string; subtotal: string; shipping: string; free: string; total: string;
-  leftForFree: string; freeReached: string; checkout: string; continue: string; sizeLabel: string; remove: string;
+  leftForFree: string; freeReached: string; freeEverywhere: string; checkout: string; continue: string; sizeLabel: string; remove: string;
   closeCart: string; increase: string; decrease: string; quantity: string; removeAria: string;
 };
 
-export default function CartDrawer({ lang, t }: { lang: Lang; t: CartTexts }) {
+export default function CartDrawer({ lang, t, shippingSettings }: { lang: Lang; t: CartTexts; shippingSettings: ShippingSettings }) {
   const { items, isOpen, close, subtotal, setQty, remove } = useCart();
   const panel = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
@@ -46,9 +46,11 @@ export default function CartDrawer({ lang, t }: { lang: Lang; t: CartTexts }) {
     };
   }, [isOpen, close]);
 
-  const shipping = shippingFor(subtotal);
-  const left = Math.max(0, FREE_SHIPPING_FROM - subtotal);
-  const progress = Math.min(100, (subtotal / FREE_SHIPPING_FROM) * 100);
+  const shipping = shippingFor(subtotal, shippingSettings);
+  const threshold = hasFreeThreshold(shippingSettings) ? (shippingSettings.freeFrom as number) : null;
+  const left = threshold ? Math.max(0, threshold - subtotal) : 0;
+  const progress = threshold ? Math.min(100, (subtotal / threshold) * 100) : 100;
+  const freeText = shippingSettings.fee <= 0 ? t.freeEverywhere : left > 0 ? fmt(t.leftForFree, { amount: formatPrice(left, lang) }) : t.freeReached;
 
   return (
     <div className={`fixed inset-0 z-[60] ${isOpen ? "" : "pointer-events-none"}`} aria-hidden={!isOpen}>
@@ -78,15 +80,19 @@ export default function CartDrawer({ lang, t }: { lang: Lang; t: CartTexts }) {
           </div>
         ) : (
           <>
-            <div className="mx-5 rounded-2xl bg-paper p-3 text-sm">
-              <p className="flex items-center gap-2 font-medium">
-                <TruckIcon width={18} height={18} className="text-accent" />
-                {left > 0 ? fmt(t.leftForFree, { amount: formatPrice(left, lang) }) : t.freeReached}
-              </p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sand" aria-hidden="true">
-                <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${progress}%` }} />
+            {(shippingSettings.fee <= 0 || threshold) && (
+              <div className="mx-5 rounded-2xl bg-paper p-3 text-sm">
+                <p className="flex items-center gap-2 font-medium">
+                  <TruckIcon width={18} height={18} className="text-accent" />
+                  {freeText}
+                </p>
+                {threshold && (
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sand" aria-hidden="true">
+                    <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${progress}%` }} />
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             <ul className="mt-3 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
               {items.map((item) => (

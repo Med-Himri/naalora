@@ -9,8 +9,8 @@ import Price from "@/components/product/Price";
 import ProductCard from "@/components/product/ProductCard";
 import ProductPurchase from "@/components/product/ProductPurchase";
 import { PlusIcon } from "@/components/icons";
-import { colorSiblings, getActiveProducts, getCategoryById, getProductBySlug, totalStock } from "@/lib/data";
-import { getDictionary } from "@/lib/i18n";
+import { colorSiblings, getActiveProducts, getCategoryById, getProductBySlug, getShippingSettings, totalStock } from "@/lib/data";
+import { getDictionaryLive } from "@/lib/i18n";
 import { isLocale, locales } from "@/lib/locales";
 import { fmt, formatPrice } from "@/lib/format";
 import { href, paths } from "@/lib/routes";
@@ -46,8 +46,8 @@ export default async function ProductPage({ params }: PageProps<"/[lang]/produit
   if (!isLocale(lang)) notFound();
   const product = await getProductBySlug(slug);
   if (!product) notFound();
-  const t = getDictionary(lang);
-  const [category, all] = await Promise.all([getCategoryById(product.categoryId), getActiveProducts()]);
+  const t = await getDictionaryLive(lang);
+  const [category, all, shipping] = await Promise.all([getCategoryById(product.categoryId), getActiveProducts(), getShippingSettings()]);
   const siblings = colorSiblings(product, all);
   // "You may also like": other models of the same category first, then other categories, then other colours.
   const others = all.filter((p) => !siblings.includes(p));
@@ -86,7 +86,7 @@ export default async function ProductPage({ params }: PageProps<"/[lang]/produit
     <div className="container-page pt-6 sm:pt-8">
       <JsonLd
         data={[
-          productLd(product, lang, category),
+          productLd(product, lang, category, shipping),
           breadcrumbLd(crumbs.map((c) => ({ name: c.name, url: c.href }))),
           faqLd(t.product.faq),
         ]}

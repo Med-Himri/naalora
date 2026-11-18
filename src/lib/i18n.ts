@@ -2,6 +2,8 @@ import "server-only";
 import { SITE, displayPhone } from "./site";
 import type { Locale } from "./locales";
 import { formatPrice } from "./format";
+import { getShippingSettings } from "./data";
+import { hasFreeThreshold, isFreeShipping, type ShippingSettings } from "./pricing";
 
 /**
  * All user-facing texts (fr + ar).
@@ -10,10 +12,6 @@ import { formatPrice } from "./format";
  */
 
 const S = SITE;
-const feeFr = formatPrice(S.shippingFee, "fr");
-const freeFr = formatPrice(S.freeShippingFrom, "fr");
-const feeAr = formatPrice(S.shippingFee, "ar");
-const freeAr = formatPrice(S.freeShippingFrom, "ar");
 const phone = displayPhone();
 const d = S.deliveryDays;
 const h = S.deliveryHours;
@@ -33,7 +31,7 @@ const fr = {
     sizeGuideTitle: "Guide des tailles (36 à 41) — Pointures en cm",
     sizeGuideDescription: "Trouvez votre pointure Naalora : correspondance taille EU et longueur du pied en cm, de 36 (22,5 cm) à 41 (26,5 cm), et méthode de mesure.",
     faqTitle: "FAQ — Paiement, livraison et échange au Maroc",
-    faqDescription: `Réponses claires : paiement à la livraison, délais ${h.min}–${h.max} h, frais ${feeFr} (offerts dès ${freeFr}), échange de taille ${S.exchangeDays} jours, entretien du daim.`,
+    faqDescription: `Réponses claires : paiement à la livraison, délais ${h.min}–${h.max} h, {shipShort}, échange de taille ${S.exchangeDays} jours, entretien du daim.`,
     aboutTitle: "À propos de Naalora — Chaussures à Casablanca",
     aboutDescription: `Naalora est une boutique de chaussures basée à Casablanca. Livraison dans tout le Maroc, paiement à la livraison et échange de taille ${S.exchangeDays} jours.`,
     checkoutTitle: "Finaliser ma commande",
@@ -70,7 +68,7 @@ const fr = {
   },
   trust: [
     { title: "Paiement à la livraison", text: "Vous payez en espèces à la réception." },
-    { title: `Livraison ${h.min}–${h.max} h`, text: `Partout au Maroc — ${feeFr}, offerte dès ${freeFr}.` },
+    { title: `Livraison ${h.min}–${h.max} h`, text: "Partout au Maroc — {shipShort}." },
     { title: `Échange de taille ${S.exchangeDays} jours`, text: "Gratuit, si la pointure ne vous va pas." },
     { title: "Support WhatsApp", text: "Une vraie personne vous répond." },
   ],
@@ -134,7 +132,7 @@ const fr = {
     },
     deliveryValue: `${h.min} à ${h.max} h (${d.min} à ${d.max} jours) partout au Maroc`,
     deliveryTitle: "Livraison & paiement",
-    deliveryText: `Livraison dans tout le Maroc en ${h.min} à ${h.max} h. Frais : ${feeFr}, offerts dès ${freeFr} d’achat. Paiement en espèces à la livraison, sans carte bancaire.`,
+    deliveryText: `Livraison dans tout le Maroc en ${h.min} à ${h.max} h. {shipSentence} Paiement en espèces à la livraison, sans carte bancaire.`,
     exchangeTitle: "Échange de taille",
     exchangeText: `La taille ne vous va pas ? Écrivez-nous sur WhatsApp dans les ${S.exchangeDays} jours suivant la réception : nous échangeons gratuitement contre une autre pointure (article non porté, dans son emballage d’origine).`,
     faqTitle: "Questions sur ce produit",
@@ -184,6 +182,7 @@ const fr = {
     total: "Total",
     leftForFree: "Plus que {amount} pour la livraison offerte",
     freeReached: "Bravo, la livraison est offerte !",
+    freeEverywhere: "Livraison gratuite partout au Maroc",
     checkout: "Commander — paiement à la livraison",
     continue: "Continuer mes achats",
     sizeLabel: "Taille {size}",
@@ -281,7 +280,7 @@ const fr = {
       },
       {
         q: "Combien coûte la livraison ?",
-        a: `La livraison coûte ${feeFr} et elle est offerte dès ${freeFr} d’achat. Le montant exact est affiché dans le panier avant de commander.`,
+        a: "{shipFaq}",
       },
       {
         q: "Livrez-vous dans tout le Maroc ?",
@@ -323,7 +322,7 @@ const fr = {
       },
       {
         title: "Livraison & paiement",
-        text: `Livraison partout au Maroc en ${h.min} à ${h.max} h. Frais : ${feeFr}, offerts dès ${freeFr}. Paiement en espèces à la livraison.`,
+        text: `Livraison partout au Maroc en ${h.min} à ${h.max} h. {shipSentence} Paiement en espèces à la livraison.`,
       },
       {
         title: "Échange de taille",
@@ -378,7 +377,7 @@ const ar: Dictionary = {
     sizeGuideTitle: "دليل المقاسات (36 إلى 41) — طول القدم بالسنتيمتر",
     sizeGuideDescription: "اعرفي مقاسك في Naalora: المقاس الأوروبي وطول القدم بالسنتيمتر، من 36 (22.5 سم) إلى 41 (26.5 سم)، مع طريقة القياس.",
     faqTitle: "أسئلة شائعة — الدفع والتوصيل والتبديل",
-    faqDescription: `إجابات واضحة: الدفع عند الاستلام، التوصيل خلال ${h.min}–${h.max} ساعة، الثمن ${feeAr} (مجاني ابتداءً من ${freeAr})، تبديل المقاس ${S.exchangeDays} أيام.`,
+    faqDescription: `إجابات واضحة: الدفع عند الاستلام، التوصيل خلال ${h.min}–${h.max} ساعة، {shipShort}، تبديل المقاس ${S.exchangeDays} أيام.`,
     aboutTitle: "من نحن — Naalora أحذية من الدار البيضاء",
     aboutDescription: `Naalora متجر أحذية مقره الدار البيضاء. توصيل لكل المغرب، الدفع عند الاستلام وتبديل المقاس خلال ${S.exchangeDays} أيام.`,
     checkoutTitle: "إتمام الطلب",
@@ -415,7 +414,7 @@ const ar: Dictionary = {
   },
   trust: [
     { title: "الدفع عند الاستلام", text: "تدفعين نقداً عند وصول الطلب." },
-    { title: `توصيل خلال ${h.min}–${h.max} ساعة`, text: `لجميع مدن المغرب — ${feeAr}، ومجاني ابتداءً من ${freeAr}.` },
+    { title: `توصيل خلال ${h.min}–${h.max} ساعة`, text: "لجميع مدن المغرب — {shipShort}." },
     { title: `تبديل المقاس خلال ${S.exchangeDays} أيام`, text: "مجاناً إذا لم يناسبك المقاس." },
     { title: "دعم عبر واتساب", text: "شخص حقيقي يجيب على رسائلك." },
   ],
@@ -479,7 +478,7 @@ const ar: Dictionary = {
     },
     deliveryValue: `${h.min} إلى ${h.max} ساعة (${d.min} إلى ${d.max} أيام) لجميع مدن المغرب`,
     deliveryTitle: "التوصيل والدفع",
-    deliveryText: `توصيل لجميع مدن المغرب خلال ${h.min} إلى ${h.max} ساعة. ثمن التوصيل ${feeAr}، ومجاني ابتداءً من ${freeAr}. الدفع نقداً عند الاستلام، بدون بطاقة بنكية.`,
+    deliveryText: `توصيل لجميع مدن المغرب خلال ${h.min} إلى ${h.max} ساعة. {shipSentence} الدفع نقداً عند الاستلام، بدون بطاقة بنكية.`,
     exchangeTitle: "تبديل المقاس",
     exchangeText: `المقاس لم يناسبك؟ راسلينا على واتساب خلال ${S.exchangeDays} أيام من الاستلام، ونبدله مجاناً بمقاس آخر (منتج غير مستعمل وفي علبته الأصلية).`,
     faqTitle: "أسئلة حول هذا المنتج",
@@ -529,6 +528,7 @@ const ar: Dictionary = {
     total: "المجموع",
     leftForFree: "بقي {amount} للحصول على توصيل مجاني",
     freeReached: "رائع، التوصيل مجاني!",
+    freeEverywhere: "توصيل مجاني لجميع مدن المغرب",
     checkout: "اطلبي — الدفع عند الاستلام",
     continue: "متابعة التسوق",
     sizeLabel: "المقاس {size}",
@@ -626,7 +626,7 @@ const ar: Dictionary = {
       },
       {
         q: "كم ثمن التوصيل؟",
-        a: `ثمن التوصيل ${feeAr}، وهو مجاني ابتداءً من ${freeAr}. المبلغ النهائي يظهر في السلة قبل الطلب.`,
+        a: "{shipFaq}",
       },
       {
         q: "هل توصلون لجميع مدن المغرب؟",
@@ -668,7 +668,7 @@ const ar: Dictionary = {
       },
       {
         title: "التوصيل والدفع",
-        text: `توصيل لجميع مدن المغرب خلال ${h.min} إلى ${h.max} ساعة. الثمن ${feeAr}، ومجاني ابتداءً من ${freeAr}. الدفع نقداً عند الاستلام.`,
+        text: `توصيل لجميع مدن المغرب خلال ${h.min} إلى ${h.max} ساعة. {shipSentence} الدفع نقداً عند الاستلام.`,
       },
       {
         title: "تبديل المقاس",
@@ -710,6 +710,38 @@ const dictionaries: Record<Locale, Dictionary> = { fr, ar };
 
 export function getDictionary(lang: Locale): Dictionary {
   return dictionaries[lang];
+}
+
+/**
+ * Delivery wording, built from the admin settings (free / fee / fee with free threshold).
+ * Fills the {shipShort}, {shipSentence} and {shipFaq} placeholders of the dictionary.
+ */
+export function shippingTexts(lang: Locale, s: ShippingSettings): Record<"shipShort" | "shipSentence" | "shipFaq", string> {
+  const fee = formatPrice(s.fee, lang);
+  const free = s.freeFrom ? formatPrice(s.freeFrom, lang) : "";
+  if (lang === "ar") {
+    if (isFreeShipping(s)) return { shipShort: "توصيل مجاني", shipSentence: "التوصيل مجاني.", shipFaq: "التوصيل مجاني لجميع مدن المغرب مهما كان مبلغ الطلب." };
+    if (hasFreeThreshold(s))
+      return { shipShort: `الثمن ${fee} (مجاني ابتداءً من ${free})`, shipSentence: `ثمن التوصيل ${fee}، ومجاني ابتداءً من ${free}.`, shipFaq: `ثمن التوصيل ${fee}، وهو مجاني ابتداءً من ${free}. المبلغ النهائي يظهر في السلة قبل الطلب.` };
+    return { shipShort: `الثمن ${fee}`, shipSentence: `ثمن التوصيل ${fee}.`, shipFaq: `ثمن التوصيل ${fee} لجميع مدن المغرب. المبلغ النهائي يظهر في السلة قبل الطلب.` };
+  }
+  if (isFreeShipping(s)) return { shipShort: "livraison gratuite", shipSentence: "Livraison gratuite.", shipFaq: "La livraison est gratuite partout au Maroc, quel que soit le montant de la commande." };
+  if (hasFreeThreshold(s))
+    return { shipShort: `frais ${fee} (offerts dès ${free})`, shipSentence: `Frais : ${fee}, offerts dès ${free} d’achat.`, shipFaq: `La livraison coûte ${fee} et elle est offerte dès ${free} d’achat. Le montant exact est affiché dans le panier avant de commander.` };
+  return { shipShort: `frais ${fee}`, shipSentence: `Frais : ${fee}.`, shipFaq: `La livraison coûte ${fee} partout au Maroc. Le montant exact est affiché dans le panier avant de commander.` };
+}
+
+function fillDeep<T>(value: T, vars: Record<string, string>): T {
+  if (typeof value === "string") return value.replace(/\{(shipShort|shipSentence|shipFaq)\}/g, (_, k: string) => vars[k]) as T;
+  if (Array.isArray(value)) return value.map((v) => fillDeep(v, vars)) as T;
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, fillDeep(v, vars)])) as T;
+  return value;
+}
+
+/** Dictionary with the current delivery price filled in. Use it wherever delivery texts are shown. */
+export async function getDictionaryLive(lang: Locale): Promise<Dictionary> {
+  const shipping = await getShippingSettings();
+  return fillDeep(dictionaries[lang], shippingTexts(lang, shipping));
 }
 
 /** City options: value is always the French name (stored in orders), label is localized. */

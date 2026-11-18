@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { ChatIcon, MailIcon, PinIcon } from "@/components/icons";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionaryLive } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
 import { SITE, displayPhone, whatsappLink } from "@/lib/site";
 import { href, paths } from "@/lib/routes";
@@ -14,14 +14,14 @@ import { JsonLd, breadcrumbLd, organizationLd } from "@/lib/jsonld";
 export async function generateMetadata({ params }: PageProps<"/[lang]/a-propos">): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
-  const t = getDictionary(lang);
+  const t = await getDictionaryLive(lang);
   return pageMetadata({ lang, path: paths.about, title: t.meta.aboutTitle, description: t.meta.aboutDescription, og: `/og/page/${lang}/about` });
 }
 
 export default async function AboutPage({ params }: PageProps<"/[lang]/a-propos">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  const t = getDictionary(lang);
+  const t = await getDictionaryLive(lang);
   return (
     <div className="container-page pt-6 sm:pt-8">
       <JsonLd data={[organizationLd(lang), breadcrumbLd([{ name: t.breadcrumbHome, url: href(lang) }, { name: t.about.title, url: href(lang, paths.about) }])]} />

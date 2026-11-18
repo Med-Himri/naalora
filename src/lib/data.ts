@@ -3,11 +3,12 @@ import { unstable_cache } from "next/cache";
 import { connectDB, isDemo } from "./db";
 import { demoStore } from "./demo-store";
 import { toCategoryDTO, toGuideDTO, toProductDTO } from "./mappers";
-import { Category, Guide, Product } from "@/models";
+import { Category, Guide, Product, Settings } from "@/models";
+import { DEFAULT_SHIPPING, type ShippingSettings } from "./pricing";
 import type { CategoryDTO, GuideDTO, ProductDTO } from "./types";
 
 /** Cache tags — admin actions call revalidateTag() with these. */
-export const TAGS = { catalog: "catalog", guides: "guides" } as const;
+export const TAGS = { catalog: "catalog", guides: "guides", settings: "settings" } as const;
 
 type Catalog = { categories: CategoryDTO[]; products: ProductDTO[] };
 
@@ -33,6 +34,21 @@ export async function loadGuidesFresh(): Promise<GuideDTO[]> {
 }
 
 // Demo mode: no data cache (the in-memory store resets on restart, the Next cache would not).
+/** Delivery settings (Admin → Réglages). Uncached: used by checkout and the admin. */
+export async function loadShippingFresh(): Promise<ShippingSettings> {
+  if (isDemo) return { ...demoStore().shipping };
+  await connectDB();
+  const doc = await Settings.findOne({ key: "main" }).lean();
+  if (!doc) return { ...DEFAULT_SHIPPING };
+  const fee = Number(doc.shippingFee) || 0;
+  const freeFrom = doc.freeShippingFrom === null || doc.freeShippingFrom === undefined ? null : Number(doc.freeShippingFrom) || null;
+  return { fee: Math.max(0, fee), freeFrom };
+}
+
+export const getShippingSettings = isDemo
+  ? loadShippingFresh
+  : unstable_cache(loadShippingFresh, ["naalora-shipping"], { tags: [TAGS.settings], revalidate: 3600 });
+
 const getCatalog = isDemo ? loadCatalogFresh : unstable_cache(loadCatalogFresh, ["naalora-catalog"], { tags: [TAGS.catalog], revalidate: 3600 });
 const getGuidesCached = isDemo ? loadGuidesFresh : unstable_cache(loadGuidesFresh, ["naalora-guides"], { tags: [TAGS.guides], revalidate: 3600 });
 

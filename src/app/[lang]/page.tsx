@@ -79,7 +79,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                     src={hero.images[0].url}
                     alt={hero.images[0].alt[lang] || t.home.heroImageAlt}
                     fill
-                    priority
+                    preload
                     sizes="(min-width: 1024px) 40vw, 90vw"
                     className="object-cover"
                   />

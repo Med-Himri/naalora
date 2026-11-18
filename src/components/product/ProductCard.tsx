@@ -21,7 +21,7 @@ export default function ProductCard({ product, lang, priority = false, headingLe
               src={first.url}
               alt={first.alt[lang] || product.name[lang]}
               fill
-              priority={priority}
+              preload={priority}
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
               className={`object-cover transition duration-500 group-hover:scale-[1.03] ${second ? "group-hover:opacity-0" : ""}`}
             />

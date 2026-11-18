@@ -11,6 +11,8 @@ import CartDrawer from "@/components/cart/CartDrawer";
 import SiteHeader from "@/components/layout/SiteHeader";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { themeScript } from "@/components/layout/ThemeToggle";
+import InlineScript from "@/components/layout/InlineScript";
+import DevStatus from "@/components/layout/DevStatus";
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -44,10 +46,10 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
   const t = getDictionary(lang);
   // suppressHydrationWarning: browser extensions (Grammarly…) add attributes to <html>/<body> before React loads.
   return (
-    <html lang={lang} dir={dirOf(lang)} data-theme="light" suppressHydrationWarning>
+    <html lang={lang} dir={dirOf(lang)} data-theme="light" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* Sets light/dark before the first paint (no flash). */}
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <InlineScript html={themeScript} />
       </head>
       <body className="flex min-h-dvh flex-col" suppressHydrationWarning>
         <a
@@ -60,6 +62,7 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
           <SiteHeader lang={lang} t={{ nav: t.nav, a11y: t.a11y }} />
           <main id="main" className="min-h-[60vh]">{children}</main>
           <SiteFooter lang={lang} />
+          <DevStatus />
           <CartDrawer
             lang={lang}
             t={{

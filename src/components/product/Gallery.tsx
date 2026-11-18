@@ -37,7 +37,7 @@ export default function Gallery({ images, thumbLabel }: { images: Img[]; thumbLa
               src={img.url}
               alt={img.alt}
               fill
-              priority={i === 0}
+              preload={i === 0}
               sizes="(min-width: 1024px) 45vw, 100vw"
               className="object-cover"
             />

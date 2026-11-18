@@ -22,7 +22,7 @@ export default function GlobalNotFound() {
       <body className="min-h-dvh" suppressHydrationWarning>
         <main id="main" className="container-page flex min-h-dvh flex-col items-center justify-center py-16 text-center">
           <Link href="/fr" aria-label="Naalora">
-            <Image src="/naalora-logo.svg" alt="Naalora" width={180} height={44} priority />
+            <Image src="/naalora-logo.svg" alt="Naalora" width={180} height={44} preload />
           </Link>
           <p className="font-display mt-10 text-7xl text-accent" aria-hidden="true">404</p>
           <div className="mt-8 grid w-full max-w-3xl gap-6 sm:grid-cols-2">

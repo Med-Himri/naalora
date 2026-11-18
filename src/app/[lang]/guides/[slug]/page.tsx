@@ -74,7 +74,7 @@ export default async function GuidePage({ params }: PageProps<"/[lang]/guides/[s
         </header>
         {guide.cover.url && (
           <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-[24px] bg-sand">
-            <Image src={guide.cover.url} alt={guide.cover.alt[lang] || ""} fill priority sizes="(min-width: 768px) 768px, 100vw" className="object-cover" />
+            <Image src={guide.cover.url} alt={guide.cover.alt[lang] || ""} fill preload sizes="(min-width: 768px) 768px, 100vw" className="object-cover" />
           </div>
         )}
         <div className="prose-naalora mt-10" dangerouslySetInnerHTML={{ __html: html }} />

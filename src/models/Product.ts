@@ -27,6 +27,8 @@ const ProductSchema = new Schema(
     slug: { type: String, required: true, unique: true, trim: true, lowercase: true },
     sku: { type: String, default: "", trim: true },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
+    /** Products sharing the same model code are shown as colours of one another. */
+    model: { type: String, default: "", trim: true, lowercase: true },
     name: { type: L10n, required: true },
     summary: { type: L10n, default: () => ({}) },
     description: { type: L10n, default: () => ({}) },

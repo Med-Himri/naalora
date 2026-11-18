@@ -7,7 +7,7 @@ import TrustBadges from "@/components/ui/TrustBadges";
 import SectionHeading from "@/components/ui/SectionHeading";
 import FaqList from "@/components/ui/FaqList";
 import { ArrowIcon, SparkIcon } from "@/components/icons";
-import { getActiveProducts, getCategories, getPublishedGuides, minPrice } from "@/lib/data";
+import { colorSiblings, getActiveProducts, getCategories, getPublishedGuides, minPrice } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
 import { href, paths } from "@/lib/routes";
@@ -34,7 +34,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const best = [...products.filter((p) => p.badge === "best"), ...products.filter((p) => p.badge !== "best")].slice(0, 4);
   const hero = best[0] ?? products[0];
   const from = minPrice(products);
-  const swatches = products.slice(0, 6);
+  const swatches = hero ? colorSiblings(hero, products).slice(0, 8) : [];
 
   return (
     <>

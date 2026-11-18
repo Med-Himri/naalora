@@ -1,5 +1,6 @@
 import "server-only";
 import { seedCategories, seedGuides, seedProducts } from "./seed-data";
+import { applyTestCatalog, testCatalogEnabled } from "./test-catalog";
 import type { CategoryDTO, GuideDTO, OrderDTO, ProductDTO } from "./types";
 
 /**
@@ -25,6 +26,7 @@ function build(): Store {
     slug: p.slug,
     sku: p.sku,
     categoryId: categories.find((c) => c.slug === p.categorySlug)!.id,
+    model: p.model,
     name: p.name,
     summary: p.summary,
     description: p.description,
@@ -53,7 +55,9 @@ function build(): Store {
     createdAt: now,
     updatedAt: now,
   }));
-  return { categories, products, guides, orders: [] };
+  const store = { categories, products, guides, orders: [] as OrderDTO[] };
+  if (testCatalogEnabled) applyTestCatalog(store);
+  return store;
 }
 
 export function demoStore(): Store {

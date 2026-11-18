@@ -19,7 +19,7 @@ export async function GET() {
   const lines = [
     `# ${SITE.name}`,
     "",
-    `> ${SITE.name} est une boutique de chaussures en ligne basée à ${SITE.city.fr} (Maroc). Elle vend aujourd’hui des pantoufles plateforme en daim (semelle 5 cm, doublure peluche), du 36 au 41, en ${products.length} couleurs${range ? `, ${range}` : ""}. Paiement à la livraison uniquement, livraison partout au Maroc.`,
+    `> ${SITE.name} est une boutique de chaussures en ligne basée à ${SITE.city.fr} (Maroc). Catalogue actuel : ${categories.map((c) => c.name.fr.toLowerCase()).join(", ")} — ${products.length} articles${range ? `, ${range}` : ""}. Paiement à la livraison uniquement, livraison partout au Maroc.`,
     "",
     "## Faits clés",
     `- Livraison : partout au Maroc, en ${h.min}–${h.max} h (${d.min} à ${d.max} jours).`,

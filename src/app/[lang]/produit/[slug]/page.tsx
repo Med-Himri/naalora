@@ -9,7 +9,7 @@ import Price from "@/components/product/Price";
 import ProductCard from "@/components/product/ProductCard";
 import ProductPurchase from "@/components/product/ProductPurchase";
 import { PlusIcon } from "@/components/icons";
-import { getActiveProducts, getCategoryById, getProductBySlug, totalStock } from "@/lib/data";
+import { colorSiblings, getActiveProducts, getCategoryById, getProductBySlug, totalStock } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n";
 import { isLocale, locales } from "@/lib/locales";
 import { fmt, formatPrice } from "@/lib/format";
@@ -48,8 +48,14 @@ export default async function ProductPage({ params }: PageProps<"/[lang]/produit
   if (!product) notFound();
   const t = getDictionary(lang);
   const [category, all] = await Promise.all([getCategoryById(product.categoryId), getActiveProducts()]);
-  const siblings = all.filter((p) => p.categoryId === product.categoryId);
-  const related = [...siblings.filter((p) => p.id !== product.id), ...all.filter((p) => p.categoryId !== product.categoryId)].slice(0, 3);
+  const siblings = colorSiblings(product, all);
+  // "You may also like": other models of the same category first, then other categories, then other colours.
+  const others = all.filter((p) => !siblings.includes(p));
+  const related = [
+    ...others.filter((p) => p.categoryId === product.categoryId),
+    ...others.filter((p) => p.categoryId !== product.categoryId),
+    ...siblings.filter((p) => p.id !== product.id),
+  ].slice(0, 3);
 
   const stock = totalStock(product);
   const stockLine = stock <= 0 ? t.product.outOfStock : stock <= 5 ? fmt(t.product.lowStock, { count: stock }) : t.product.inStock;

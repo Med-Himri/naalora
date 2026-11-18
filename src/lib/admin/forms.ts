@@ -63,6 +63,7 @@ export type ProductInput = {
   slug: string;
   sku: string;
   categoryId: string;
+  model: string;
   name: L10n;
   summary: L10n;
   description: L10n;
@@ -121,6 +122,7 @@ export function parseProduct(fd: FormData): { data: ProductInput; errors: FieldE
     slug: checkSlug(str(fd, "slug", 80), name.fr, errors),
     sku: str(fd, "sku", 40),
     categoryId,
+    model: slugify(str(fd, "model", 80)),
     name,
     summary: l10n(fd, "summary", 600, true),
     description: l10n(fd, "description", 5000, true),

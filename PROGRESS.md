@@ -18,6 +18,12 @@ Toutes les sections du cahier des charges sont codées. Chaque étape passe `npm
 10. **Recherche IA** — robots IA autorisés, `/llms.txt`, faits centralisés dans `src/lib/site.ts`.
 11. **README** — MongoDB Atlas, Cloudinary, variables d’environnement, seed, déploiement Vercel.
 
+## Ajouté depuis
+
+- **Champ « Modèle » sur les produits** : les produits qui partagent le même code de modèle s’affichent comme couleurs l’un de l’autre (pastilles, ligne « Couleurs », couleurs de l’accueil). Vide = toute la catégorie (compatible avec les données existantes).
+- **Catalogue de test avec de vraies photos** (mode démo uniquement, `NAALORA_TEST_CATALOG=1`) : photos fournisseur recadrées en 4:5 dans `public/test-photos/` (**exclu de Git, jamais déployé**). Il ajoute une catégorie « Bottes & bottines » (902 ×3 couleurs, 911, 948), la pantoufle JR-26 (×3 couleurs) et remplace les illustrations des 6 pantoufles plateforme. Les prix des nouveaux modèles sont provisoires.
+- ⚠️ **À ne pas publier tel quel** : les pantoufles plateforme portent le logo **UGG** et la botte 948 imite le motif « Oblique » de Dior. Vendre ou photographier des articles portant la marque d’un autre est de la contrefaçon (et interdit par Google Merchant Center). Avant la mise en ligne : stock sans logo et photos propres.
+
 ## En cours / non vérifié
 
 - **MongoDB réel non testé** : aucun MongoDB n’était disponible pendant le développement. Le seed, la transaction de commande et les écritures de l’admin sur MongoDB n’ont été vérifiés que par TypeScript. Le même parcours a été testé de bout en bout en mode démo.

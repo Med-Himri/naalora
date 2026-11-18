@@ -32,9 +32,10 @@ export default function ProductForm({ product, categories }: { product?: Product
 
       <Section title="Identité">
         <L10nFields base="name" label="Nom" values={product?.name} errors={e} required />
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <TextField name="slug" label="Slug (URL, en français)" defaultValue={product?.slug} error={e.slug} hint="Vide = généré depuis le nom FR." dir="ltr" />
           <TextField name="sku" label="Référence (SKU)" defaultValue={product?.sku} dir="ltr" />
+          <TextField name="model" label="Modèle (regroupe les couleurs)" defaultValue={product?.model} dir="ltr" hint="Même code = couleurs d’un même modèle (ex. pantoufle-plateforme)." />
           <div>
             <label htmlFor="f-categoryId" className="label">Catégorie <span className="text-accent-dark">*</span></label>
             <select id="f-categoryId" name="categoryId" defaultValue={product?.categoryId ?? categories[0]?.id ?? ""} className="field" aria-invalid={!!e.categoryId}>

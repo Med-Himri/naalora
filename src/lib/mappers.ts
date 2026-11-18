@@ -22,6 +22,7 @@ export function toProductDTO(p: any): ProductDTO {
     slug: p.slug,
     sku: p.sku ?? "",
     categoryId: String(p.category),
+    model: p.model ?? "",
     name: l10n(p.name),
     summary: l10n(p.summary),
     description: l10n(p.description),

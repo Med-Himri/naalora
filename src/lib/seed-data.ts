@@ -42,6 +42,7 @@ export const seedProducts = colors.map((c, i) => ({
   slug: `pantoufle-plateforme-${c.key}`,
   sku: `NA-PPL-${c.code}`,
   categorySlug: "pantoufles",
+  model: "pantoufle-plateforme",
   name: { fr: `Pantoufle plateforme ${c.color.fr}`, ar: `بلغة بنعل مرتفع ${c.color.ar}` },
   summary: {
     fr: `Pantoufle plateforme en daim couleur ${c.color.fr.toLowerCase()}, doublée de peluche chaude, avec un col tressé en zigzag. Semelle légère et antidérapante de 5 cm. Disponible du 36 au 41, livrée partout au Maroc en ${h.min}–${h.max} h avec paiement à la livraison.`,

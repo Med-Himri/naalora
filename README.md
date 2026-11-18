@@ -17,6 +17,16 @@ npm run dev
 
 Ouvrez http://localhost:3000. Sans `MONGODB_URI`, le site tourne en **mode démo** : catalogue, guides et commandes sont en mémoire (perdus au redémarrage). L’admin est sur http://localhost:3000/admin — mot de passe `admin` en développement.
 
+### Catalogue de test (photos locales)
+
+Pour tester avec de vraies photos sans base de données, placez des images JPG dans `public/test-photos/` (dossier ignoré par Git) puis lancez :
+
+```bash
+NAALORA_TEST_CATALOG=1 npm run dev
+```
+
+La liste des produits de test et les noms de fichiers attendus sont dans `src/lib/test-catalog.ts`. Ce mode n’existe qu’en mode démo.
+
 ## Variables d’environnement
 
 Copiez `.env.example` en `.env.local` et remplissez :

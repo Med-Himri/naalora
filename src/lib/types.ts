@@ -22,6 +22,8 @@ export type ProductDTO = {
   slug: string;
   sku: string;
   categoryId: string;
+  /** Model code: products with the same model are colours of each other ("" = whole category) */
+  model: string;
   name: L10n;
   summary: L10n;
   description: L10n;

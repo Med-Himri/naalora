@@ -72,6 +72,11 @@ export async function getGuideBySlug(slug: string): Promise<GuideDTO | null> {
 
 /* ---------- Helpers ---------- */
 
+/** Other colours of the same model (same category + same model code; empty code = whole category). */
+export function colorSiblings(product: ProductDTO, all: ProductDTO[]): ProductDTO[] {
+  return all.filter((p) => p.categoryId === product.categoryId && p.model === product.model);
+}
+
 export function totalStock(p: ProductDTO): number {
   return p.sizes.reduce((sum, s) => sum + Math.max(0, s.stock), 0);
 }

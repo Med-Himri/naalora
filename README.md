@@ -91,9 +91,14 @@ Dans **Admin → Produits → Nouveau produit**, l’« Assistant IA » remplit 
 
 ## 3. Déploiement sur Vercel
 
-1. Poussez le dépôt sur GitHub, puis sur https://vercel.com → *Add New Project* → importez le dépôt.
-2. *Settings → Environment Variables* : ajoutez toutes les variables ci-dessus (Production + Preview).
-3. Déployez. Ajoutez ensuite votre domaine `naalora.com` (*Settings → Domains*) et mettez `NEXT_PUBLIC_SITE_URL=https://naalora.com`.
+Le projet Vercel **`naalora`** est déjà créé et relié au dépôt GitHub : chaque `git push` sur `main` redéploie le site.
+
+- Région des fonctions : **Paris (`cdg1`)**, proche du Maroc et d’Atlas. Node.js 22.
+- Variables déjà définies : `MONGODB_DB`, `NEXT_PUBLIC_SITE_URL` (`https://naalora.vercel.app` pendant les tests), `NEXT_PUBLIC_CONTACT_EMAIL`.
+- **À ajouter vous-même** dans *Settings → Environment Variables* (type *Sensitive*, Production + Preview) : `MONGODB_URI`, `ADMIN_PASSWORD`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `GROQ_API_KEY`, `NEXT_PUBLIC_WHATSAPP_NUMBER` — puis *Deployments → Redeploy*.
+- **Mode test** : la *Vercel Authentication* est active, seules les personnes connectées à votre compte Vercel voient le site (Google ne l’indexe pas).
+
+**Au lancement** (plan Pro) : désactivez *Settings → Deployment Protection → Vercel Authentication*, ajoutez `naalora.com` (*Settings → Domains*), mettez `NEXT_PUBLIC_SITE_URL=https://naalora.com`, puis redéployez.
 
 Les pages sont générées statiquement et revalidées : toute modification dans l’admin (produits, catégories, guides) met à jour le site immédiatement.
 

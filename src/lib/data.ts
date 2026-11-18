@@ -8,7 +8,7 @@ import { DEFAULT_SHIPPING, type ShippingSettings } from "./pricing";
 import { minPriceOf, totalStock } from "./product";
 
 export { totalStock };
-import type { CategoryDTO, GuideDTO, ProductDTO } from "./types";
+import type { CategoryDTO, GuideDTO, HeroDTO, ProductDTO } from "./types";
 
 /** Cache tags — admin actions call revalidateTag() with these. */
 export const TAGS = { catalog: "catalog", guides: "guides", settings: "settings" } as const;
@@ -47,6 +47,17 @@ export async function loadShippingFresh(): Promise<ShippingSettings> {
   const freeFrom = doc.freeShippingFrom === null || doc.freeShippingFrom === undefined ? null : Number(doc.freeShippingFrom) || null;
   return { fee: Math.max(0, fee), freeFrom };
 }
+
+/** Home hero picture (Admin → Réglages). Uncached version for the admin. */
+export async function loadHeroFresh(): Promise<HeroDTO> {
+  if (isDemo) return structuredClone(demoStore().hero);
+  await connectDB();
+  const doc = await Settings.findOne({ key: "main" }).select("hero").lean();
+  const h = doc?.hero;
+  return { url: h?.url ?? "", publicId: h?.publicId ?? "", alt: { fr: h?.alt?.fr ?? "", ar: h?.alt?.ar ?? "" } };
+}
+
+export const getHero = isDemo ? loadHeroFresh : unstable_cache(loadHeroFresh, ["naalora-hero"], { tags: [TAGS.settings], revalidate: 3600 });
 
 export const getShippingSettings = isDemo
   ? loadShippingFresh

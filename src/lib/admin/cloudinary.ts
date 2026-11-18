@@ -1,7 +1,7 @@
 import "server-only";
 import { v2 as cloudinary } from "cloudinary";
 
-export const FOLDERS = { products: "naalora/products", guides: "naalora/guides" } as const;
+export const FOLDERS = { products: "naalora/products", guides: "naalora/guides", site: "naalora/site" } as const;
 export type Folder = keyof typeof FOLDERS;
 
 export function cloudinaryConfigured(): boolean {

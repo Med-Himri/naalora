@@ -9,7 +9,7 @@ import { parseCategory, parseGuide, parseProduct, str, type FieldErrors } from "
 import {
   AdminError, addProductImage, createCategory, moveCategory, moveProductImage, removeProductImage, saveGuide, saveProduct,
   setGuideCover, setGuidePublished, setOrderStatus, setProductActive, setProductImageAlt, updateCategory, ORDER_STATUS_VALUES,
-  deleteProduct, saveShippingSettings,
+  deleteProduct, saveShippingSettings, saveHeroImage, saveHeroAlt,
 } from "@/lib/admin/repo";
 import { cloudinaryConfigured, destroyImage, isOwnUpload, signUpload, type Folder } from "@/lib/admin/cloudinary";
 import { rateLimit } from "@/lib/rate-limit";
@@ -100,7 +100,7 @@ export async function toggleProductActive(fd: FormData): Promise<void> {
 
 export async function getUploadSignature(folder: Folder): Promise<{ ok: true; sig: ReturnType<typeof signUpload> } | AdminResult> {
   if (!(await isAdmin())) return FAIL("Session expirée.");
-  if (folder !== "products" && folder !== "guides") return FAIL("Dossier invalide.");
+  if (folder !== "products" && folder !== "guides" && folder !== "site") return FAIL("Dossier invalide.");
   if (!cloudinaryConfigured()) return FAIL("Cloudinary n’est pas configuré (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET).");
   return { ok: true, sig: signUpload(folder) };
 }
@@ -256,5 +256,27 @@ export async function saveShippingAction(_prev: AdminResult | null, fd: FormData
     updateTag(TAGS.settings);
     refreshSite();
     return OK("Livraison enregistrée. Le site est à jour.");
+  }) as Promise<AdminResult>;
+}
+
+/* ---------- Settings: home hero picture ---------- */
+
+export async function setHeroImageAction(url: string | null, publicId: string | null): Promise<AdminResult> {
+  return guard(async () => {
+    if (url !== null && !isOwnUpload(String(url), String(publicId), "site")) return FAIL("Image refusée (origine inconnue).");
+    const prev = await saveHeroImage(url ? { url: String(url), publicId: String(publicId) } : null);
+    if (prev && prev !== publicId) await destroyImage(prev);
+    updateTag(TAGS.settings);
+    refreshSite();
+    return OK(url ? "Image d’accueil enregistrée." : "Image par défaut rétablie.");
+  }) as Promise<AdminResult>;
+}
+
+export async function saveHeroAltAction(_prev: AdminResult | null, fd: FormData): Promise<AdminResult> {
+  return guard(async () => {
+    await saveHeroAlt({ fr: str(fd, "alt_fr", 160), ar: str(fd, "alt_ar", 160) });
+    updateTag(TAGS.settings);
+    refreshSite();
+    return OK("Texte alternatif enregistré.");
   }) as Promise<AdminResult>;
 }

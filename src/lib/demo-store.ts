@@ -1,14 +1,14 @@
 import "server-only";
 import { seedCategories, seedGuides, seedProducts } from "./seed-data";
 import { applyTestCatalog, testCatalogEnabled, testPhotosDir, testPhotosFound } from "./test-catalog";
-import type { CategoryDTO, GuideDTO, OrderDTO, ProductDTO } from "./types";
+import type { CategoryDTO, GuideDTO, HeroDTO, OrderDTO, ProductDTO } from "./types";
 import { DEFAULT_SHIPPING, type ShippingSettings } from "./pricing";
 
 /**
  * In-memory data for demo mode (no MONGODB_URI). Resets on every server restart.
  * Guides are shown as published here so every page can be previewed locally.
  */
-type Store = { categories: CategoryDTO[]; products: ProductDTO[]; guides: GuideDTO[]; orders: OrderDTO[]; shipping: ShippingSettings };
+type Store = { categories: CategoryDTO[]; products: ProductDTO[]; guides: GuideDTO[]; orders: OrderDTO[]; shipping: ShippingSettings; hero: HeroDTO };
 
 const g = globalThis as unknown as { __naaloraDemo?: Store };
 
@@ -57,7 +57,7 @@ function build(): Store {
     createdAt: now,
     updatedAt: now,
   }));
-  const store = { categories, products, guides, orders: [] as OrderDTO[], shipping: { ...DEFAULT_SHIPPING } };
+  const store = { categories, products, guides, orders: [] as OrderDTO[], shipping: { ...DEFAULT_SHIPPING }, hero: { url: "", publicId: "", alt: { fr: "", ar: "" } } };
   if (testCatalogEnabled) applyTestCatalog(store);
   // One line in the terminal so it is clear which data the site shows.
   console.info(

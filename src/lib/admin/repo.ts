@@ -450,6 +450,30 @@ export async function deleteProduct(id: string): Promise<string[]> {
 
 /* ===================== Store settings ===================== */
 
+/** Sets (or clears) the home hero picture; returns the previous Cloudinary publicId. */
+export async function saveHeroImage(img: { url: string; publicId: string } | null): Promise<string> {
+  const next = img ?? { url: "", publicId: "" };
+  if (isDemo) {
+    const s = demoStore();
+    const prev = s.hero.publicId;
+    s.hero = { ...s.hero, ...next };
+    return prev;
+  }
+  await connectDB();
+  const doc = await Settings.findOne({ key: "main" }).select("hero").lean();
+  await Settings.updateOne({ key: "main" }, { $set: { "hero.url": next.url, "hero.publicId": next.publicId } }, { upsert: true });
+  return doc?.hero?.publicId ?? "";
+}
+
+export async function saveHeroAlt(alt: L10n): Promise<void> {
+  if (isDemo) {
+    demoStore().hero.alt = alt;
+    return;
+  }
+  await connectDB();
+  await Settings.updateOne({ key: "main" }, { $set: { "hero.alt": alt } }, { upsert: true });
+}
+
 export async function saveShippingSettings(s: ShippingSettings): Promise<void> {
   if (isDemo) {
     demoStore().shipping = { ...s };

@@ -65,6 +65,9 @@ export type GuideDTO = {
   updatedAt: string;
 };
 
+/** Home hero picture. url "" = built-in illustration (public/hero/naalora-hero.webp). */
+export type HeroDTO = { url: string; publicId: string; alt: L10n };
+
 export type OrderItemDTO = { productId: string; slug: string; name: string; color: { key: string; name: string }; size: number; qty: number; unitPrice: number };
 
 export type OrderDTO = {

@@ -6,7 +6,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
 /** Signed direct upload: the server signs, the browser sends the file straight to Cloudinary. */
-export async function uploadToCloudinary(file: File, folder: "products" | "guides"): Promise<{ url: string; publicId: string }> {
+export async function uploadToCloudinary(file: File, folder: "products" | "guides" | "site"): Promise<{ url: string; publicId: string }> {
   if (!TYPES.includes(file.type)) throw new Error("Format accepté : JPG, PNG, WebP ou AVIF.");
   if (file.size > MAX_BYTES) throw new Error("Image trop lourde (10 Mo maximum).");
   const res = await getUploadSignature(folder);

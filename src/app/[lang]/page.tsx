@@ -7,7 +7,7 @@ import TrustBadges from "@/components/ui/TrustBadges";
 import SectionHeading from "@/components/ui/SectionHeading";
 import FaqList from "@/components/ui/FaqList";
 import { ArrowIcon, SparkIcon } from "@/components/icons";
-import { getActiveProducts, getCategories, getPublishedGuides, minPrice } from "@/lib/data";
+import { getActiveProducts, getCategories, getHero, getPublishedGuides, minPrice } from "@/lib/data";
 import { coverImage } from "@/lib/product";
 import { getDictionaryLive } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
@@ -30,13 +30,14 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const t = await getDictionaryLive(lang);
-  const [products, categories, guides] = await Promise.all([getActiveProducts(), getCategories(), getPublishedGuides()]);
+  const [products, categories, guides, heroSetting] = await Promise.all([getActiveProducts(), getCategories(), getPublishedGuides(), getHero()]);
 
   const best = [...products.filter((p) => p.badge === "best"), ...products.filter((p) => p.badge !== "best")].slice(0, 4);
   const hero = best[0] ?? products[0];
   const from = minPrice(products);
   const swatches = hero ? hero.colors.slice(0, 8) : [];
-  const heroImg = hero ? coverImage(hero) : null;
+  // Fixed hero picture (Admin → Réglages), or the built-in Naalora illustration.
+  const heroPicture = { url: heroSetting.url || "/hero/naalora-hero.webp", alt: heroSetting.alt[lang] || t.home.heroImageAlt };
 
   return (
     <>
@@ -73,27 +74,18 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </div>
             )}
           </div>
-          {hero && heroImg && (
-            <div className="relative">
-              <Link href={href(lang, paths.product(hero.slug))} className="block">
-                <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[24px] shadow-lift">
-                  <Image
-                    src={heroImg.url}
-                    alt={heroImg.alt[lang] || t.home.heroImageAlt}
-                    fill
-                    preload
-                    sizes="(min-width: 1024px) 40vw, 90vw"
-                    className="object-cover"
-                  />
-                </div>
-              </Link>
-              {from !== null && (
-                <p className="absolute bottom-5 start-2 rounded-full bg-paper px-4 py-2 text-sm font-semibold shadow-lift sm:start-6">
-                  {fmt(t.home.fromPrice, { price: formatPrice(from, lang) })}
-                </p>
-              )}
-            </div>
-          )}
+          <div className="relative">
+            <Link href={href(lang, paths.shop)} className="block" aria-label={t.home.ctaShop}>
+              <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[24px] shadow-lift">
+                <Image src={heroPicture.url} alt={heroPicture.alt} fill preload sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
+              </div>
+            </Link>
+            {from !== null && (
+              <p className="absolute bottom-5 start-2 rounded-full bg-paper px-4 py-2 text-sm font-semibold shadow-lift sm:start-6">
+                {fmt(t.home.fromPrice, { price: formatPrice(from, lang) })}
+              </p>
+            )}
+          </div>
         </div>
       </section>
 

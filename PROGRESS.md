@@ -28,6 +28,8 @@ Toutes les sections du cahier des charges sont codées. Chaque étape passe `npm
 - **Icônes WhatsApp retirées** (en-tête, bouton flottant, menu mobile, icônes des liens). Les liens WhatsApp restent en texte (pied de page, FAQ, À propos, page de remerciement, admin).
 - **Catalogue de test automatique** : en mode démo, il s’active tout seul si `public/test-photos/` contient les photos (`NAALORA_TEST_CATALOG=0` pour le couper). Le terminal affiche une ligne `[naalora] …` qui dit quel mode est utilisé.
 
+- **Assistant IA (Groq) pour ajouter un produit** : photo et/ou note → fiche FR/AR pré-remplie dans le formulaire. 3 modèles en secours (`qwen/qwen3.8-27b` → `openai/gpt-oss-120b` → `openai/gpt-oss-20b`, configurables par `GROQ_MODELS`). Testé avec la vraie API Groq : création d’un produit avec photo (2,7 s) et bascule automatique quand le 1er modèle est en panne.
+
 ## En cours / non vérifié
 
 - **MongoDB réel non testé** : aucun MongoDB n’était disponible pendant le développement. Le seed, la transaction de commande et les écritures de l’admin sur MongoDB n’ont été vérifiés que par TypeScript. Le même parcours a été testé de bout en bout en mode démo.

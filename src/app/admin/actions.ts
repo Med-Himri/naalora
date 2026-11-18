@@ -12,6 +12,9 @@ import {
 } from "@/lib/admin/repo";
 import { cloudinaryConfigured, destroyImage, isOwnUpload, signUpload, type Folder } from "@/lib/admin/cloudinary";
 import { rateLimit } from "@/lib/rate-limit";
+import { loadCatalogFresh } from "@/lib/data";
+import { draftProduct, type ProductDraft } from "@/lib/ai/product-draft";
+import { groqConfigured, GroqError, type Attempt } from "@/lib/ai/groq";
 import type { OrderStatus } from "@/lib/types";
 
 export type AdminResult = { ok: boolean; message: string; errors?: FieldErrors };
@@ -177,4 +180,31 @@ export async function setGuideCoverAction(guideId: string, url: string | null, p
     guidesChanged();
     return OK(url ? "Couverture enregistrée." : "Couverture supprimée.");
   }) as Promise<AdminResult>;
+}
+
+/* ---------- AI product assistant (Groq) ---------- */
+
+export type AiDraftResult =
+  | { ok: true; draft: ProductDraft & { categoryId: string | null }; model: string; attempts: Attempt[] }
+  | { ok: false; message: string; attempts?: Attempt[] };
+
+export async function generateProductDraftAction(input: { note: string; image: string | null }): Promise<AiDraftResult> {
+  if (!(await isAdmin())) return { ok: false, message: "Session expirée : reconnectez-vous." };
+  if (!groqConfigured()) return { ok: false, message: "L’assistant IA n’est pas configuré : ajoutez GROQ_API_KEY sur le serveur." };
+  if (!rateLimit("ai-draft", 30, 10 * 60 * 1000)) return { ok: false, message: "Trop de demandes. Réessayez dans quelques minutes." };
+  try {
+    const { categories } = await loadCatalogFresh();
+    const res = await draftProduct({
+      note: String(input?.note ?? ""),
+      image: typeof input?.image === "string" ? input.image : null,
+      categories: categories.map((c) => ({ slug: c.slug, name: c.name.fr })),
+    });
+    const categoryId = categories.find((c) => c.slug === res.result.categorySlug)?.id ?? null;
+    return { ok: true, draft: { ...res.result, categoryId }, model: res.model, attempts: res.attempts };
+  } catch (err) {
+    const attempts = (err as { attempts?: Attempt[] }).attempts;
+    const message = err instanceof GroqError || err instanceof Error ? err.message : "Erreur inconnue.";
+    console.error("[admin/ai]", message);
+    return { ok: false, message, attempts };
+  }
 }

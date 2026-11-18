@@ -28,7 +28,7 @@ export default function ProductForm({ product, categories }: { product?: Product
 
   return (
     <form onSubmit={keepFormSubmit(action)} className="space-y-5">
-      {product && <input type="hidden" name="id" value={product.id} />}
+      {product?.id && <input type="hidden" name="id" value={product.id} />}
 
       <Section title="Identité">
         <L10nFields base="name" label="Nom" values={product?.name} errors={e} required />
@@ -48,7 +48,7 @@ export default function ProductForm({ product, categories }: { product?: Product
 
       <Section title="Prix & mise en avant">
         <div className="grid gap-3 sm:grid-cols-4">
-          <TextField name="price" label="Prix (MAD)" type="number" min={0} step={1} defaultValue={product?.price} error={e.price} required />
+          <TextField name="price" label="Prix (MAD)" type="number" min={0} step={1} defaultValue={product?.price || ""} error={e.price} required />
           <TextField name="oldPrice" label="Ancien prix (MAD)" type="number" min={0} step={1} defaultValue={product?.oldPrice} error={e.oldPrice} hint="Optionnel : affiche « −X »." />
           <div>
             <label htmlFor="f-badge" className="label">Badge</label>
@@ -114,7 +114,7 @@ export default function ProductForm({ product, categories }: { product?: Product
       </Section>
 
       <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-[20px] border border-line bg-paper/95 p-3 shadow-lift backdrop-blur">
-        <button className="btn btn-primary" disabled={pending}>{pending ? "Enregistrement…" : product ? "Enregistrer" : "Créer le produit"}</button>
+        <button className="btn btn-primary" disabled={pending}>{pending ? "Enregistrement…" : product?.id ? "Enregistrer" : "Créer le produit"}</button>
         <div className="flex-1"><Notice result={state} /></div>
       </div>
     </form>

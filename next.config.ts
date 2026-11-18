@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["mongoose", "cloudinary"],
   experimental: {
     globalNotFound: true,
+    // Admin AI assistant sends a shrunk product photo (~200 KB) to a server action.
+    serverActions: { bodySizeLimit: "2mb" },
   },
 };
 

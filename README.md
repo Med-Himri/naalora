@@ -36,6 +36,9 @@ Copiez `.env.example` en `.env.local` et remplissez :
 | `CLOUDINARY_API_KEY` | Clé API Cloudinary | non |
 | `CLOUDINARY_API_SECRET` | Secret API Cloudinary | **oui** |
 | `ADMIN_PASSWORD` | Mot de passe de `/admin` (obligatoire en production, sinon l’admin est désactivé) | **oui** |
+| `GROQ_API_KEY` | Clé API Groq pour l’assistant IA de l’admin (facultatif) | **oui** |
+| `GROQ_MODELS` | Facultatif : modèles essayés dans l’ordre, séparés par des virgules | non |
+| `GROQ_VISION_MODELS` | Facultatif : lesquels de ces modèles savent lire une photo | non |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Numéro WhatsApp au format international sans `+` (`2126XXXXXXXX`) | non |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | E-mail affiché sur le site | non |
 
@@ -68,6 +71,15 @@ Les commandes utilisent une **transaction** MongoDB (stock vérifié et décrém
 3. C’est tout : l’admin envoie les images directement à Cloudinary avec une **signature générée côté serveur** (dossiers `naalora/products` et `naalora/guides`). Une image supprimée dans l’admin est aussi supprimée de Cloudinary.
 
 Les images sont affichées avec `next/image` et transformées par Cloudinary (`f_auto,q_auto`, largeur adaptée) — voir `src/lib/image-loader.ts`. Tant que vous n’avez pas ajouté de photos, des illustrations de remplacement (`public/placeholders`) sont utilisées.
+
+## Assistant IA (Groq) — ajouter un produit
+
+Dans **Admin → Produits → Nouveau produit**, l’« Assistant IA » remplit la fiche à partir d’une photo et/ou d’une note (nom, slug, modèle, couleur, teinte, résumé, description, caractéristiques, texte alternatif — en français et en arabe). Vous vérifiez, indiquez le prix et le stock, puis enregistrez. Le prix et le stock ne sont jamais inventés, et l’IA a pour consigne de ne jamais écrire de nom de marque.
+
+1. Créez une clé sur https://console.groq.com/keys et mettez-la dans `GROQ_API_KEY` (`.env.local` et Vercel).
+2. Par défaut, 3 modèles sont essayés dans l’ordre : `qwen/qwen3.8-27b` (lit les photos), puis `openai/gpt-oss-120b`, puis `openai/gpt-oss-20b`. Si un modèle échoue (panne, limite, délai de 30 s, modèle retiré), le suivant prend le relais ; l’écran affiche les essais.
+3. Les modèles de secours ne lisent que la note : avec une photo seule, seul le premier fonctionne. Ajoutez toujours une courte note.
+4. Quand Groq retire un modèle, changez `GROQ_MODELS` (liste à jour sur https://console.groq.com/docs/models) — pas besoin de toucher au code.
 
 ## 3. Déploiement sur Vercel
 

@@ -17,7 +17,15 @@ export default async function AdminProductsPage() {
           <Link href="/admin/produits/nouveau" className="btn btn-outline">+ Nouveau produit</Link>
         </div>
       </div>
-      {categories.length === 0 && <p className="mt-4 rounded-2xl bg-sand p-4 text-sm">Créez d’abord une catégorie dans l’onglet Catégories.</p>}
+      {categories.length === 0 && (
+        <div className="mt-4 rounded-2xl bg-sand p-4 text-sm">
+          <p className="font-semibold">La base de données est vide.</p>
+          <p className="mt-1">
+            Pour charger la catégorie « Pantoufles », les 6 pantoufles et les 3 guides d’exemple, lancez <code className="font-semibold">npm run seed</code> dans le dossier du projet (Node.js 22.18 ou plus récent), puis rechargez cette page.
+            Ou créez une catégorie dans l’onglet <Link href="/admin/categories" className="underline underline-offset-4">Catégories</Link>.
+          </p>
+        </div>
+      )}
       <ul className="mt-6 space-y-3">
         {products.map((p) => {
           const stock = totalStock(p);

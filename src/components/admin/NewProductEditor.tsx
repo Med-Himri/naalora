@@ -37,12 +37,14 @@ function draftToProduct(d: Draft, categories: CategoryDTO[]): ProductDTO {
   };
 }
 
-export default function NewProductEditor({ categories }: { categories: CategoryDTO[] }) {
+export default function NewProductEditor({ categories, ai }: { categories: CategoryDTO[]; ai: { ready: boolean; models: string[] } }) {
   const [draft, setDraft] = useState<ProductDTO | undefined>();
   const [version, setVersion] = useState(0);
   return (
     <div className="space-y-5">
       <AiProductAssistant
+        ready={ai.ready}
+        models={ai.models}
         onDraft={(d) => {
           setDraft(draftToProduct(d, categories));
           setVersion((v) => v + 1); // remount the form with the new values

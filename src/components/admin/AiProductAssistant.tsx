@@ -17,7 +17,7 @@ async function toDataUrl(file: File, max = 1024): Promise<string> {
 
 type Draft = Extract<AiDraftResult, { ok: true }>["draft"];
 
-export default function AiProductAssistant({ onDraft }: { onDraft: (draft: Draft) => void }) {
+export default function AiProductAssistant({ onDraft, ready, models }: { onDraft: (draft: Draft) => void; ready: boolean; models: string[] }) {
   const [note, setNote] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,11 +48,17 @@ export default function AiProductAssistant({ onDraft }: { onDraft: (draft: Draft
   }
 
   return (
-    <section className="space-y-4 rounded-[20px] border border-accent-dark/25 bg-paper p-5 shadow-soft sm:p-6" aria-labelledby="ai-title">
+    <section id="assistant-ia" className="scroll-mt-28 space-y-4 rounded-[20px] border border-accent-dark/25 bg-paper p-5 shadow-soft sm:p-6" aria-labelledby="ai-title">
       <div className="flex items-center gap-2">
         <SparkIcon className="text-accent-dark" />
         <h2 id="ai-title" className="text-xl">Assistant IA</h2>
       </div>
+      {!ready && (
+        <p role="alert" className="rounded-2xl bg-accent-dark/10 px-4 py-3 text-sm font-medium text-accent-dark">
+          Assistant désactivé : ajoutez <code>GROQ_API_KEY=…</code> dans <code>.env.local</code> (clé sur console.groq.com/keys), puis relancez <code>npm run dev</code>.
+        </p>
+      )}
+      <p className="text-xs text-muted">Modèles (dans l’ordre) : {models.join(" → ")}</p>
       <p className="text-sm text-muted">
         Ajoutez une photo et/ou une note : l’IA remplit le formulaire en français et en arabe. Vérifiez tout avant d’enregistrer — les prix et le stock ne sont jamais inventés.
       </p>
@@ -79,7 +85,7 @@ export default function AiProductAssistant({ onDraft }: { onDraft: (draft: Draft
             disabled={busy}
           />
           <div className="flex flex-wrap items-center gap-3">
-            <button type="button" className="btn btn-accent" onClick={generate} disabled={busy || (!note.trim() && !image)}>
+            <button type="button" className="btn btn-accent" onClick={generate} disabled={!ready || busy || (!note.trim() && !image)}>
               {busy ? "Rédaction en cours…" : "Générer la fiche"}
             </button>
             {image && (

@@ -12,7 +12,10 @@ export default async function AdminProductsPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-4xl">Produits</h1>
-        <Link href="/admin/produits/nouveau" className="btn btn-primary">+ Nouveau produit</Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/produits/nouveau#assistant-ia" className="btn btn-accent">✨ Ajouter avec l’IA</Link>
+          <Link href="/admin/produits/nouveau" className="btn btn-outline">+ Nouveau produit</Link>
+        </div>
       </div>
       {categories.length === 0 && <p className="mt-4 rounded-2xl bg-sand p-4 text-sm">Créez d’abord une catégorie dans l’onglet Catégories.</p>}
       <ul className="mt-6 space-y-3">

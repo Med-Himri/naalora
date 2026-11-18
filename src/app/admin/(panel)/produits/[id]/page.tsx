@@ -23,9 +23,20 @@ export default async function EditProductPage({ params, searchParams }: { params
         </div>
         {sp.created && <p role="status" className="mt-3 rounded-2xl bg-success/10 px-4 py-3 text-sm font-medium text-success">Produit créé. Ajoutez maintenant les images.</p>}
       </div>
-      <Section title="Images">
-        <ImageManager productId={product.id} images={product.images} defaultAlt={product.name} />
-      </Section>
+      {product.colors.map((c) => (
+        <Section key={c.id} title={`Photos — ${c.name.fr}`}>
+          <div className="-mt-2 flex items-center gap-2 text-sm text-muted">
+            <span className="h-4 w-4 rounded-full ring-1 ring-ink/20" style={{ background: c.hex }} aria-hidden="true" />
+            Ces photos s’affichent quand le client choisit « {c.name.fr} ».
+          </div>
+          <ImageManager
+            productId={product.id}
+            colorKey={c.key}
+            images={c.images}
+            defaultAlt={{ fr: `${product.name.fr} ${c.name.fr}`, ar: `${product.name.ar} ${c.name.ar}` }}
+          />
+        </Section>
+      ))}
       <ProductForm product={product} categories={categories} />
       <div className="flex justify-end border-t border-line pt-4">
         <DeleteProductButton id={product.id} name={product.name.fr} withLabel />

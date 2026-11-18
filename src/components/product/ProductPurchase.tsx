@@ -18,7 +18,7 @@ export type PurchaseTexts = {
 type Props = {
   lang: Lang;
   t: PurchaseTexts;
-  product: { id: string; slug: string; price: number; name: L10n; color: L10n; image: string; sizes: SizeDTO[] };
+  product: { id: string; slug: string; price: number; name: L10n; colorKey: string; color: L10n; image: string; sizes: SizeDTO[] };
   sizeGuideHref: string;
 };
 
@@ -41,7 +41,7 @@ export default function ProductPurchase({ lang, t, product, sizeGuideHref }: Pro
       return false;
     }
     add(
-      { productId: product.id, slug: product.slug, size, qty: Math.min(qty, maxQty), price: product.price, maxQty: stockOf(size), name: product.name, color: product.color, image: product.image },
+      { productId: product.id, slug: product.slug, colorKey: product.colorKey, size, qty: Math.min(qty, maxQty), price: product.price, maxQty: stockOf(size), name: product.name, color: product.color, image: product.image },
       { open: openDrawer },
     );
     setAdded(true);

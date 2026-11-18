@@ -5,9 +5,10 @@ import type { L10n } from "@/lib/types";
 
 /** Display snapshot only — the server rebuilds every line from MongoDB at checkout. */
 export type CartItem = {
-  key: string; // `${productId}:${size}`
+  key: string; // `${productId}:${colorKey}:${size}`
   productId: string;
   slug: string;
+  colorKey: string;
   size: number;
   qty: number;
   price: number;
@@ -17,7 +18,7 @@ export type CartItem = {
   image: string;
 };
 
-const KEY = "naalora-cart-v1";
+const KEY = "naalora-cart-v2"; // v2: lines carry a colour
 const EMPTY: CartItem[] = [];
 let items: CartItem[] = EMPTY;
 let loaded = false;
@@ -25,7 +26,7 @@ const listeners = new Set<() => void>();
 
 function isItem(x: unknown): x is CartItem {
   const i = x as CartItem;
-  return !!i && typeof i.productId === "string" && typeof i.size === "number" && typeof i.qty === "number" && i.qty > 0;
+  return !!i && typeof i.productId === "string" && typeof i.colorKey === "string" && typeof i.size === "number" && typeof i.qty === "number" && i.qty > 0;
 }
 
 function load() {
@@ -74,7 +75,7 @@ export const cartStore = {
     return EMPTY;
   },
   add(item: Omit<CartItem, "key">) {
-    const key = `${item.productId}:${item.size}`;
+    const key = `${item.productId}:${item.colorKey}:${item.size}`;
     const cap = Math.max(1, Math.min(MAX_QTY_PER_LINE, item.maxQty));
     const existing = items.find((i) => i.key === key);
     if (existing) {

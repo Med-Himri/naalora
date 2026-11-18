@@ -156,6 +156,9 @@ const fr = {
     ],
     alsoLike: "Vous aimerez aussi",
     otherColors: "Autres couleurs",
+    colorsCount: "{count} couleurs",
+    colorSoldOut: "{name} — épuisé",
+    fromPrice: "dès {price}",
   },
   shop: {
     title: "Boutique",
@@ -502,6 +505,9 @@ const ar: Dictionary = {
     ],
     alsoLike: "قد يعجبك أيضاً",
     otherColors: "ألوان أخرى",
+    colorsCount: "{count} ألوان",
+    colorSoldOut: "{name} — نفذ",
+    fromPrice: "ابتداءً من {price}",
   },
   shop: {
     title: "المتجر",

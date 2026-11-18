@@ -7,6 +7,7 @@ const OrderItemSchema = new Schema(
     product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     slug: { type: String, required: true },
     name: { type: String, required: true },
+    color: { key: { type: String, default: "" }, name: { type: String, default: "" } },
     size: { type: Number, required: true },
     qty: { type: Number, required: true, min: 1 },
     unitPrice: { type: Number, required: true, min: 0 },

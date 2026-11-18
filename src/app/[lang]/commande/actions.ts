@@ -20,7 +20,7 @@ export type CheckoutState =
       message?: string;
       fields?: Partial<Record<Field, string>>;
       /** Lines whose quantity must be lowered (available stock), or removed (0). */
-      adjust?: { productId: string; size: number; available: number }[];
+      adjust?: { productId: string; colorKey: string; size: number; available: number }[];
     }
   | { status: "success"; ref: string; total: number; subtotal: number; shipping: number };
 
@@ -38,12 +38,13 @@ function parseLines(raw: unknown): OrderLineInput[] | null {
   for (const x of data) {
     if (!x || typeof x !== "object") return null;
     const productId = typeof x.productId === "string" ? x.productId.slice(0, 64) : "";
+    const colorKey = typeof x.colorKey === "string" ? x.colorKey.slice(0, 60) : "";
     const size = Number(x.size);
     const qty = Number(x.qty);
-    if (!productId || !Number.isInteger(size) || size < 15 || size > 50 || !Number.isInteger(qty) || qty < 1 || qty > MAX_QTY_PER_LINE) return null;
-    const key = `${productId}:${size}`;
+    if (!productId || !colorKey || !Number.isInteger(size) || size < 15 || size > 50 || !Number.isInteger(qty) || qty < 1 || qty > MAX_QTY_PER_LINE) return null;
+    const key = `${productId}:${colorKey}:${size}`;
     const prev = merged.get(key);
-    merged.set(key, { productId, size, qty: Math.min(MAX_QTY_PER_LINE, (prev?.qty ?? 0) + qty) });
+    merged.set(key, { productId, colorKey, size, qty: Math.min(MAX_QTY_PER_LINE, (prev?.qty ?? 0) + qty) });
   }
   return [...merged.values()];
 }
@@ -89,7 +90,7 @@ export async function placeOrder(_prev: CheckoutState, form: FormData): Promise<
       const message = [gone.length ? fmt(t.productGone, { items: list(gone) }) : "", stock.length ? fmt(t.stock, { items: list(stock) }) : ""]
         .filter(Boolean)
         .join(" ");
-      return { status: "error", message, adjust: err.problems.map((p) => ({ productId: p.productId, size: p.size, available: p.available })) };
+      return { status: "error", message, adjust: err.problems.map((p) => ({ productId: p.productId, colorKey: p.colorKey, size: p.size, available: p.available })) };
     }
     console.error("[checkout] order failed", err);
     return { status: "error", message: t.generic };

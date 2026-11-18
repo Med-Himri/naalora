@@ -7,7 +7,8 @@ import TrustBadges from "@/components/ui/TrustBadges";
 import SectionHeading from "@/components/ui/SectionHeading";
 import FaqList from "@/components/ui/FaqList";
 import { ArrowIcon, SparkIcon } from "@/components/icons";
-import { colorSiblings, getActiveProducts, getCategories, getPublishedGuides, minPrice } from "@/lib/data";
+import { getActiveProducts, getCategories, getPublishedGuides, minPrice } from "@/lib/data";
+import { coverImage } from "@/lib/product";
 import { getDictionaryLive } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
 import { href, paths } from "@/lib/routes";
@@ -34,7 +35,8 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const best = [...products.filter((p) => p.badge === "best"), ...products.filter((p) => p.badge !== "best")].slice(0, 4);
   const hero = best[0] ?? products[0];
   const from = minPrice(products);
-  const swatches = hero ? colorSiblings(hero, products).slice(0, 8) : [];
+  const swatches = hero ? hero.colors.slice(0, 8) : [];
+  const heroImg = hero ? coverImage(hero) : null;
 
   return (
     <>
@@ -56,14 +58,14 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               <div className="mt-8 flex items-center gap-3">
                 <span className="text-sm text-muted">{t.home.colorsLabel}</span>
                 <ul className="flex -space-x-1.5 rtl:space-x-reverse">
-                  {swatches.map((p) => (
-                    <li key={p.id}>
+                  {swatches.map((c) => (
+                    <li key={c.key}>
                       <Link
-                        href={href(lang, paths.product(p.slug))}
+                        href={`${href(lang, paths.product(hero!.slug))}?couleur=${c.key}`}
                         className="block h-7 w-7 rounded-full border-2 border-sand ring-1 ring-ink/25 transition hover:-translate-y-0.5"
-                        style={{ background: p.swatchHex }}
-                        aria-label={fmt(t.a11y.colorLink, { name: p.colorName[lang] })}
-                        title={p.colorName[lang]}
+                        style={{ background: c.hex }}
+                        aria-label={fmt(t.a11y.colorLink, { name: c.name[lang] })}
+                        title={c.name[lang]}
                       />
                     </li>
                   ))}
@@ -71,13 +73,13 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </div>
             )}
           </div>
-          {hero?.images[0] && (
+          {hero && heroImg && (
             <div className="relative">
               <Link href={href(lang, paths.product(hero.slug))} className="block">
                 <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[24px] shadow-lift">
                   <Image
-                    src={hero.images[0].url}
-                    alt={hero.images[0].alt[lang] || t.home.heroImageAlt}
+                    src={heroImg.url}
+                    alt={heroImg.alt[lang] || t.home.heroImageAlt}
                     fill
                     preload
                     sizes="(min-width: 1024px) 40vw, 90vw"
@@ -106,7 +108,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {categories.map((c) => {
             const items = products.filter((p) => p.categoryId === c.id);
-            const img = items[0]?.images[0];
+            const img = items[0] ? coverImage(items[0]) : null;
             return (
               <li key={c.id}>
                 <Link href={href(lang, paths.category(c.slug))} className="group relative block aspect-[4/5] overflow-hidden rounded-[20px] bg-brown shadow-soft">

@@ -1,18 +1,16 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import FaqList from "@/components/ui/FaqList";
 import TrustBadges from "@/components/ui/TrustBadges";
-import Gallery from "@/components/product/Gallery";
-import Price from "@/components/product/Price";
 import ProductCard from "@/components/product/ProductCard";
-import ProductPurchase from "@/components/product/ProductPurchase";
+import ProductView from "@/components/product/ProductView";
 import { PlusIcon } from "@/components/icons";
-import { colorSiblings, getActiveProducts, getCategoryById, getProductBySlug, getShippingSettings, totalStock } from "@/lib/data";
+import { getActiveProducts, getCategoryById, getProductBySlug, getShippingSettings } from "@/lib/data";
+import { allSizes, coverImage, defaultColor, minPriceOf, priceOf } from "@/lib/product";
 import { getDictionaryLive } from "@/lib/i18n";
 import { isLocale, locales } from "@/lib/locales";
-import { fmt, formatPrice } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { href, paths } from "@/lib/routes";
 import { pageMetadata, shareImageFrom } from "@/lib/seo";
 import { JsonLd, breadcrumbLd, faqLd, productLd } from "@/lib/jsonld";
@@ -30,11 +28,11 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/produit/[s
   if (!isLocale(lang)) return {};
   const p = await getProductBySlug(slug);
   if (!p) return {};
-  const img = p.images[0];
+  const img = coverImage(p);
   return pageMetadata({
     lang,
     path: paths.product(p.slug),
-    title: `${p.name[lang]} — ${formatPrice(p.price, lang)}`,
+    title: `${p.name[lang]} — ${formatPrice(minPriceOf(p), lang)}`,
     description: p.summary[lang],
     images: shareImageFrom(img?.url) ? [{ url: shareImageFrom(img?.url)!, width: 1200, height: 630, alt: img!.alt[lang] || p.name[lang] }] : undefined,
     og: `/og/product/${lang}/${p.slug}`,
@@ -48,19 +46,14 @@ export default async function ProductPage({ params }: PageProps<"/[lang]/produit
   if (!product) notFound();
   const t = await getDictionaryLive(lang);
   const [category, all, shipping] = await Promise.all([getCategoryById(product.categoryId), getActiveProducts(), getShippingSettings()]);
-  const siblings = colorSiblings(product, all);
-  // "You may also like": other models of the same category first, then other categories, then other colours.
-  const others = all.filter((p) => !siblings.includes(p));
-  const related = [
-    ...others.filter((p) => p.categoryId === product.categoryId),
-    ...others.filter((p) => p.categoryId !== product.categoryId),
-    ...siblings.filter((p) => p.id !== product.id),
-  ].slice(0, 3);
+  // "You may also like": other products of the same category first, then the rest.
+  const others = all.filter((p) => p.id !== product.id);
+  const related = [...others.filter((p) => p.categoryId === product.categoryId), ...others.filter((p) => p.categoryId !== product.categoryId)].slice(0, 3);
 
-  const stock = totalStock(product);
-  const stockLine = stock <= 0 ? t.product.outOfStock : stock <= 5 ? fmt(t.product.lowStock, { count: stock }) : t.product.inStock;
-  const sizes = product.sizes.map((s) => s.size);
-  const sizeRange = sizes.length ? `${Math.min(...sizes)}–${Math.max(...sizes)} (EU)` : "—";
+  const first = defaultColor(product);
+  const sizes = allSizes(product);
+  const sizeRange = sizes.length ? `${sizes[0]}–${sizes[sizes.length - 1]} (EU)` : "—";
+  const prices = [...new Set(product.colors.map((c) => priceOf(product, c)))].sort((a, b) => a - b);
   const badge = product.badge === "best" ? t.product.badgeBest : product.badge === "new" ? t.product.badgeNew : null;
 
   const specs: [string, string][] = [
@@ -68,10 +61,10 @@ export default async function ProductPage({ params }: PageProps<"/[lang]/produit
     [t.product.specs.lining, product.specs.lining[lang]],
     [t.product.specs.sole, product.specs.soleHeight[lang]],
     [t.product.specs.sizes, sizeRange],
-    [t.product.specs.colors, siblings.map((p) => p.colorName[lang]).join(", ")],
+    [t.product.specs.colors, product.colors.map((c) => c.name[lang]).join(", ")],
     [t.product.specs.care, product.specs.care[lang]],
     [t.product.specs.delivery, t.product.deliveryValue],
-    [t.product.specs.price, formatPrice(product.price, lang)],
+    [t.product.specs.price, prices.length > 1 ? prices.map((x) => formatPrice(x, lang)).join(" / ") : formatPrice(prices[0], lang)],
     [t.product.specs.sku, product.sku],
   ].filter(([, v]) => !!v) as [string, string][];
 
@@ -93,97 +86,59 @@ export default async function ProductPage({ params }: PageProps<"/[lang]/produit
       />
       <Breadcrumbs label={t.a11y.breadcrumb} items={crumbs} />
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-14">
-        <div className="lg:sticky lg:top-28 lg:self-start">
-          <Gallery
-            images={product.images.map((i) => ({ id: i.id, url: i.url, alt: i.alt[lang] || product.name[lang] }))}
-            thumbLabel={t.a11y.thumbnail}
-          />
-        </div>
-
-        <div>
-          {badge && <p className="eyebrow">{badge}</p>}
-          <h1 className="mt-2 text-4xl leading-tight sm:text-5xl">{product.name[lang]}</h1>
-          <p className="mt-4 text-lg leading-relaxed text-ink/85">{product.summary[lang]}</p>
-
-          <div className="mt-6">
-            <Price price={product.price} oldPrice={product.oldPrice} lang={lang} saveLabel={t.product.save} size="lg" />
-            <p className={`mt-2 flex items-center gap-2 text-sm font-medium ${stock <= 0 ? "text-muted" : "text-success"}`}>
-              <span className={`h-2 w-2 rounded-full ${stock <= 0 ? "bg-muted" : "bg-whatsapp"}`} aria-hidden="true" />
-              {stockLine}
-            </p>
-          </div>
-
-          {siblings.length > 1 && (
-            <div className="mt-6">
-              <p className="text-sm font-semibold">
-                {t.product.color} : <span className="font-normal text-muted">{product.colorName[lang]}</span>
-              </p>
-              <ul className="mt-3 flex flex-wrap gap-2.5">
-                {siblings.map((p) => (
-                  <li key={p.id}>
-                    <Link
-                      href={href(lang, paths.product(p.slug))}
-                      aria-label={fmt(t.a11y.colorLink, { name: p.colorName[lang] })}
-                      aria-current={p.id === product.id ? "page" : undefined}
-                      title={p.colorName[lang]}
-                      className={`block h-10 w-10 rounded-full ring-offset-2 ring-offset-cream transition ${p.id === product.id ? "ring-2 ring-ink" : "ring-1 ring-ink/15 hover:ring-ink/50"}`}
-                      style={{ background: p.swatchHex }}
-                    />
-                  </li>
-                ))}
-              </ul>
+      <ProductView
+        lang={lang}
+        product={product}
+        initialKey={first.key}
+        sizeGuideHref={href(lang, paths.sizeGuide)}
+        t={{
+          color: t.product.color,
+          inStock: t.product.inStock,
+          lowStock: t.product.lowStock,
+          outOfStock: t.product.outOfStock,
+          save: t.product.save,
+          thumbnail: t.a11y.thumbnail,
+          colorSoldOut: t.product.colorSoldOut,
+          size: t.product.size,
+          soldOut: t.product.soldOut,
+          sizeGuide: t.product.sizeGuide,
+          quantity: t.product.quantity,
+          addToCart: t.product.addToCart,
+          added: t.product.added,
+          orderNow: t.product.orderNow,
+          chooseSize: t.product.chooseSize,
+          increase: t.a11y.increase,
+          decrease: t.a11y.decrease,
+        }}
+        header={
+          <>
+            {badge && <p className="eyebrow">{badge}</p>}
+            <h1 className="mt-2 text-4xl leading-tight sm:text-5xl">{product.name[lang]}</h1>
+            <p className="mt-4 text-lg leading-relaxed text-ink/85">{product.summary[lang]}</p>
+          </>
+        }
+        footer={
+          <>
+            <div className="mt-8">
+              <TrustBadges items={t.trust} compact />
             </div>
-          )}
-
-          <div className="mt-7">
-            <ProductPurchase
-              lang={lang}
-              sizeGuideHref={href(lang, paths.sizeGuide)}
-              product={{
-                id: product.id,
-                slug: product.slug,
-                price: product.price,
-                name: product.name,
-                color: product.colorName,
-                image: product.images[0]?.url ?? "",
-                sizes: product.sizes,
-              }}
-              t={{
-                size: t.product.size,
-                soldOut: t.product.soldOut,
-                sizeGuide: t.product.sizeGuide,
-                quantity: t.product.quantity,
-                addToCart: t.product.addToCart,
-                added: t.product.added,
-                orderNow: t.product.orderNow,
-                chooseSize: t.product.chooseSize,
-                increase: t.a11y.increase,
-                decrease: t.a11y.decrease,
-              }}
-            />
-          </div>
-
-          <div className="mt-8">
-            <TrustBadges items={t.trust} compact />
-          </div>
-
-          <div className="mt-8 divide-y divide-line overflow-hidden rounded-[20px] bg-paper shadow-soft">
-            {[
-              { title: t.product.deliveryTitle, text: t.product.deliveryText },
-              { title: t.product.exchangeTitle, text: t.product.exchangeText },
-            ].map((a) => (
-              <details key={a.title} className="group px-5 [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex cursor-pointer list-none items-center justify-between py-4 font-semibold">
-                  {a.title}
-                  <PlusIcon width={18} height={18} className="transition-transform duration-300 group-open:rotate-45" />
-                </summary>
-                <p className="pb-5 leading-relaxed text-muted">{a.text}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </div>
+            <div className="mt-8 divide-y divide-line overflow-hidden rounded-[20px] bg-paper shadow-soft">
+              {[
+                { title: t.product.deliveryTitle, text: t.product.deliveryText },
+                { title: t.product.exchangeTitle, text: t.product.exchangeText },
+              ].map((a) => (
+                <details key={a.title} className="group px-5 [&_summary::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between py-4 font-semibold">
+                    {a.title}
+                    <PlusIcon width={18} height={18} className="transition-transform duration-300 group-open:rotate-45" />
+                  </summary>
+                  <p className="pb-5 leading-relaxed text-muted">{a.text}</p>
+                </details>
+              ))}
+            </div>
+          </>
+        }
+      />
 
       <div className="mt-16 grid gap-10 lg:grid-cols-2">
         <section aria-labelledby="desc-title">

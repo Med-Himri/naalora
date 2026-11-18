@@ -34,6 +34,9 @@ Toutes les sections du cahier des charges sont codées. Chaque étape passe `npm
 - **Suppression de produit** (icône corbeille dans la liste + bouton sur la fiche, avec confirmation) : supprime aussi les photos Cloudinary ; les commandes passées gardent leur copie.
 - Après chaque modification dans l’admin, tout le site est régénéré (les changements sont visibles immédiatement).
 
+- **Produits multi-couleurs** : un produit = plusieurs couleurs. Chaque couleur a ses photos (12 max), ses tailles et son stock, et un prix facultatif. Sur la fiche, le client choisit la couleur : photos, prix, stock et tailles changent ; l’URL garde la couleur (`?couleur=rose`). Panier, commande (stock décrémenté par couleur + taille, de façon atomique), annulation (remise en stock dans la bonne couleur), admin (éditeur de couleurs + photos par couleur), JSON-LD `ProductGroup`, flux Merchant (un article par couleur) et IA mis à jour.
+- **Migration** `npm run migrate` (aussi lancée par `npm run seed`) : fusionne les anciens produits « un par couleur » partageant un code modèle. ⚠️ Non testée sur une vraie base MongoDB (pas de MongoDB dans l’environnement de développement) — faire une sauvegarde Atlas avant de la lancer.
+
 ## En cours / non vérifié
 
 - **MongoDB réel non testé** : aucun MongoDB n’était disponible pendant le développement. Le seed, la transaction de commande et les écritures de l’admin sur MongoDB n’ont été vérifiés que par TypeScript. Le même parcours a été testé de bout en bout en mode démo.

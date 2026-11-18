@@ -5,6 +5,9 @@ import { demoStore } from "./demo-store";
 import { toCategoryDTO, toGuideDTO, toProductDTO } from "./mappers";
 import { Category, Guide, Product, Settings } from "@/models";
 import { DEFAULT_SHIPPING, type ShippingSettings } from "./pricing";
+import { minPriceOf, totalStock } from "./product";
+
+export { totalStock };
 import type { CategoryDTO, GuideDTO, ProductDTO } from "./types";
 
 /** Cache tags — admin actions call revalidateTag() with these. */
@@ -88,15 +91,6 @@ export async function getGuideBySlug(slug: string): Promise<GuideDTO | null> {
 
 /* ---------- Helpers ---------- */
 
-/** Other colours of the same model (same category + same model code; empty code = whole category). */
-export function colorSiblings(product: ProductDTO, all: ProductDTO[]): ProductDTO[] {
-  return all.filter((p) => p.categoryId === product.categoryId && p.model === product.model);
-}
-
-export function totalStock(p: ProductDTO): number {
-  return p.sizes.reduce((sum, s) => sum + Math.max(0, s.stock), 0);
-}
-
 export function minPrice(products: ProductDTO[]): number | null {
-  return products.length ? Math.min(...products.map((p) => p.price)) : null;
+  return products.length ? Math.min(...products.map(minPriceOf)) : null;
 }

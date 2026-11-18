@@ -1,5 +1,6 @@
 import "server-only";
-import type { CategoryDTO, GuideDTO, L10n, OrderDTO, ProductDTO } from "./types";
+import type { CategoryDTO, ColorDTO, GuideDTO, L10n, OrderDTO, ProductDTO, ProductImageDTO, SizeDTO } from "./types";
+import { slugKey } from "./product";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- lean() documents are loosely typed */
 const l10n = (v: any): L10n => ({ fr: v?.fr ?? "", ar: v?.ar ?? "" });
@@ -16,13 +17,53 @@ export function toCategoryDTO(c: any): CategoryDTO {
   };
 }
 
+const toImages = (list: any[] | undefined): ProductImageDTO[] =>
+  (list ?? [])
+    .map((img: any) => ({ id: String(img._id ?? img.id), url: img.url, publicId: img.publicId ?? "", alt: l10n(img.alt), position: img.position ?? 0 }))
+    .sort((a, b) => a.position - b.position);
+
+const toSizes = (list: any[] | undefined): SizeDTO[] =>
+  (list ?? []).map((s: any) => ({ size: Number(s.size), stock: Math.max(0, Number(s.stock) || 0) })).sort((a, b) => a.size - b.size);
+
+const money = (v: any): number | null => (v === null || v === undefined || v === "" || Number.isNaN(Number(v)) ? null : Number(v));
+
 export function toProductDTO(p: any): ProductDTO {
+  let colors: ColorDTO[] = (p.colors ?? []).map((c: any, i: number) => ({
+    id: String(c._id ?? c.id ?? `${p._id}-${i}`),
+    key: c.key,
+    name: l10n(c.name),
+    hex: c.hex ?? "#cccccc",
+    tone: c.tone ?? "other",
+    price: money(c.price),
+    oldPrice: money(c.oldPrice),
+    images: toImages(c.images),
+    sizes: toSizes(c.sizes),
+    position: c.position ?? i,
+  }));
+  // Legacy document (one product per colour, before colours existed): expose it as a single colour.
+  if (!colors.length) {
+    const name = l10n(p.colorName);
+    colors = [
+      {
+        id: `${p._id}-legacy`,
+        key: slugKey(name.fr) || "unique",
+        name: name.fr || name.ar ? name : { fr: "Unique", ar: "لون واحد" },
+        hex: p.swatchHex ?? "#cccccc",
+        tone: p.tone ?? "other",
+        price: null,
+        oldPrice: null,
+        images: toImages(p.images),
+        sizes: toSizes(p.sizes),
+        position: 0,
+      },
+    ];
+  }
+  colors.sort((a, b) => a.position - b.position);
   return {
     id: String(p._id),
     slug: p.slug,
     sku: p.sku ?? "",
     categoryId: String(p.category),
-    model: p.model ?? "",
     name: l10n(p.name),
     summary: l10n(p.summary),
     description: l10n(p.description),
@@ -32,24 +73,10 @@ export function toProductDTO(p: any): ProductDTO {
       soleHeight: l10n(p.specs?.soleHeight),
       care: l10n(p.specs?.care),
     },
-    colorName: l10n(p.colorName),
-    swatchHex: p.swatchHex ?? "#cccccc",
-    tone: p.tone ?? "other",
     price: p.price,
-    oldPrice: p.oldPrice ?? null,
+    oldPrice: money(p.oldPrice),
     badge: p.badge ?? "none",
-    images: (p.images ?? [])
-      .map((img: any) => ({
-        id: String(img._id),
-        url: img.url,
-        publicId: img.publicId ?? "",
-        alt: l10n(img.alt),
-        position: img.position ?? 0,
-      }))
-      .sort((a: { position: number }, b: { position: number }) => a.position - b.position),
-    sizes: (p.sizes ?? [])
-      .map((s: any) => ({ size: s.size, stock: s.stock }))
-      .sort((a: { size: number }, b: { size: number }) => a.size - b.size),
+    colors,
     active: !!p.active,
     position: p.position ?? 0,
     createdAt: iso(p.createdAt),
@@ -88,6 +115,7 @@ export function toOrderDTO(o: any): OrderDTO {
       productId: String(it.product),
       slug: it.slug,
       name: it.name,
+      color: { key: it.color?.key ?? "", name: it.color?.name ?? "" },
       size: it.size,
       qty: it.qty,
       unitPrice: it.unitPrice,

@@ -2,12 +2,12 @@ import "server-only";
 import { Types } from "mongoose";
 import { connectDB, isDemo } from "../db";
 import { demoStore } from "../demo-store";
-import { toOrderDTO } from "../mappers";
+import { toOrderDTO, toProductDTO } from "../mappers";
 import { isObjectId } from "../validation";
 import { Category, Guide, Order, Product, Settings } from "@/models";
 import type { ShippingSettings } from "../pricing";
 import type { CategoryInput, GuideInput, ProductInput } from "./forms";
-import type { L10n, OrderDTO, OrderStatus, ProductImageDTO } from "../types";
+import type { ColorDTO, L10n, OrderDTO, OrderStatus, ProductImageDTO } from "../types";
 
 /**
  * Admin data operations. Every function works on MongoDB, or on the in-memory demo store
@@ -46,7 +46,9 @@ export async function setOrderStatus(id: string, status: OrderStatus): Promise<v
     if (o.status === "annule" && status !== "annule") throw new AdminError("Une commande annulée ne peut pas être rouverte. Créez une nouvelle commande.");
     if (status === "annule" && o.status !== "annule") {
       for (const it of o.items) {
-        const row = s.products.find((p) => p.id === it.productId)?.sizes.find((x) => x.size === it.size);
+        const prod = s.products.find((p) => p.id === it.productId);
+        const color = prod?.colors.find((c) => c.key === it.color?.key) ?? prod?.colors[0];
+        const row = color?.sizes.find((x) => x.size === it.size);
         if (row) row.stock += it.qty;
       }
     }
@@ -63,7 +65,18 @@ export async function setOrderStatus(id: string, status: OrderStatus): Promise<v
     const res = await Order.updateOne({ _id: id, status: { $ne: "annule" } }, { $set: { status } });
     if (res.modifiedCount === 1) {
       for (const it of order.items) {
-        await Product.updateOne({ _id: it.product, "sizes.size": it.size }, { $inc: { "sizes.$.stock": it.qty } });
+        const colorKey = it.color?.key;
+        if (colorKey) {
+          // Product with colours: put the pairs back in this colour + size.
+          await Product.updateOne(
+            { _id: it.product, "colors.key": colorKey },
+            { $inc: { "colors.$[c].sizes.$[s].stock": it.qty } },
+            { arrayFilters: [{ "c.key": colorKey }, { "s.size": it.size }] },
+          );
+        } else {
+          // Order placed before colours existed.
+          await Product.updateOne({ _id: it.product, "sizes.size": it.size }, { $inc: { "sizes.$.stock": it.qty } });
+        }
       }
     }
     return;
@@ -144,34 +157,98 @@ export async function moveCategory(id: string, dir: -1 | 1): Promise<void> {
 
 /* ===================== Products ===================== */
 
-export async function saveProduct(id: string | null, data: ProductInput): Promise<string> {
+const LEGACY_UNSET = { colorName: "", swatchHex: "", tone: "", images: "", sizes: "", model: "" };
+
+/**
+ * Old single-colour document → product with one colour (keeps its photos and stock).
+ * Done once, the first time the product is edited.
+ */
+async function ensureColors(id: string): Promise<void> {
+  const doc = await Product.findById(id).lean();
+  if (!doc) throw new AdminError("Produit introuvable.");
+  if (doc.colors && doc.colors.length) return;
+  const c = toProductDTO(doc).colors[0];
+  await Product.updateOne(
+    { _id: id, $or: [{ colors: { $exists: false } }, { colors: { $size: 0 } }] },
+    {
+      $set: {
+        colors: [
+          {
+            key: c.key,
+            name: c.name,
+            hex: c.hex,
+            tone: c.tone,
+            price: null,
+            oldPrice: null,
+            images: c.images.map((i) => ({ url: i.url, publicId: i.publicId, alt: i.alt, position: i.position })),
+            sizes: c.sizes,
+            position: 0,
+          },
+        ],
+      },
+      $unset: LEGACY_UNSET,
+    },
+  );
+}
+
+/** Saves the product; returns its id and the Cloudinary photos of removed colours (to delete there). */
+export async function saveProduct(id: string | null, data: ProductInput): Promise<{ id: string; removedPublicIds: string[] }> {
   if (id) assertId(id);
   if (!(await categoryExists(data.categoryId))) throw new AdminError("Catégorie introuvable.");
   if (await slugTaken("product", data.slug, id ?? undefined)) throw new AdminError("Ce slug est déjà utilisé par un autre produit.");
-  const { categoryId, ...rest } = data;
+  const { categoryId, colors, ...rest } = data;
 
   if (isDemo) {
     const s = demoStore();
-    if (id) {
-      const p = s.products.find((x) => x.id === id);
-      if (!p) throw new AdminError("Produit introuvable.");
-      Object.assign(p, rest, { categoryId, updatedAt: now() });
-      return id;
+    const existing = id ? s.products.find((x) => x.id === id) : null;
+    if (id && !existing) throw new AdminError("Produit introuvable.");
+    const nextColors: ColorDTO[] = colors.map((c, i) => {
+      const prev = existing?.colors.find((x) => x.id === c.id);
+      return { id: prev?.id ?? demoId("demo-color"), key: c.key, name: c.name, hex: c.hex, tone: c.tone, price: c.price, oldPrice: c.oldPrice, images: prev?.images ?? [], sizes: c.sizes, position: i };
+    });
+    const removed = (existing?.colors ?? []).filter((x) => !nextColors.some((c) => c.id === x.id)).flatMap((x) => x.images.map((i) => i.publicId)).filter(Boolean);
+    if (existing) {
+      Object.assign(existing, rest, { categoryId, colors: nextColors, updatedAt: now() });
+      return { id: existing.id, removedPublicIds: removed };
     }
     const newId = demoId("demo-prod");
-    s.products.push({ id: newId, ...rest, categoryId, images: [], createdAt: now(), updatedAt: now() });
-    return newId;
+    s.products.push({ id: newId, ...rest, categoryId, colors: nextColors, createdAt: now(), updatedAt: now() });
+    return { id: newId, removedPublicIds: [] };
   }
 
   await connectDB();
-  const doc = { ...rest, category: new Types.ObjectId(categoryId) };
+  let prevColors: ColorDTO[] = [];
   if (id) {
-    const res = await Product.updateOne({ _id: id }, { $set: doc });
+    await ensureColors(id);
+    const doc = await Product.findById(id).lean();
+    if (!doc) throw new AdminError("Produit introuvable.");
+    prevColors = toProductDTO(doc).colors;
+  }
+  // Photos are managed separately (per colour): keep them from the database, never from the form.
+  const nextColors = colors.map((c, i) => {
+    const prev = prevColors.find((x) => x.id === c.id);
+    return {
+      ...(prev && isObjectId(prev.id) ? { _id: new Types.ObjectId(prev.id) } : {}),
+      key: c.key,
+      name: c.name,
+      hex: c.hex,
+      tone: c.tone,
+      price: c.price,
+      oldPrice: c.oldPrice,
+      images: (prev?.images ?? []).map((img) => ({ ...(isObjectId(img.id) ? { _id: new Types.ObjectId(img.id) } : {}), url: img.url, publicId: img.publicId, alt: img.alt, position: img.position })),
+      sizes: c.sizes,
+      position: i,
+    };
+  });
+  const removed = prevColors.filter((x) => !colors.some((c) => c.id === x.id)).flatMap((x) => x.images.map((i) => i.publicId)).filter(Boolean);
+  const doc = { ...rest, category: new Types.ObjectId(categoryId), colors: nextColors };
+  if (id) {
+    const res = await Product.updateOne({ _id: id }, { $set: doc, $unset: LEGACY_UNSET });
     if (res.matchedCount !== 1) throw new AdminError("Produit introuvable.");
-    return id;
+    return { id, removedPublicIds: removed };
   }
   const created = await Product.create(doc);
-  return String(created._id);
+  return { id: String(created._id), removedPublicIds: [] };
 }
 
 export async function setProductActive(id: string, active: boolean): Promise<void> {
@@ -186,50 +263,74 @@ export async function setProductActive(id: string, active: boolean): Promise<voi
   await Product.updateOne({ _id: id }, { $set: { active } });
 }
 
-export async function addProductImage(id: string, img: { url: string; publicId: string; alt: L10n }): Promise<void> {
+/* ---------- Photos of one colour (targeted updates: never overwrite stock) ---------- */
+
+const MAX_IMAGES_PER_COLOR = 12;
+
+function demoColor(id: string, colorKey: string): ColorDTO {
+  const c = demoStore().products.find((x) => x.id === id)?.colors.find((x) => x.key === colorKey);
+  if (!c) throw new AdminError("Couleur introuvable. Enregistrez le produit d’abord.");
+  return c;
+}
+
+async function dbColor(id: string, colorKey: string): Promise<ColorDTO> {
+  await connectDB();
+  await ensureColors(id);
+  const doc = await Product.findById(id).lean();
+  const c = doc ? toProductDTO(doc).colors.find((x) => x.key === colorKey) : null;
+  if (!c) throw new AdminError("Couleur introuvable. Enregistrez le produit d’abord.");
+  return c;
+}
+
+export async function addProductImage(id: string, colorKey: string, img: { url: string; publicId: string; alt: L10n }): Promise<void> {
   assertId(id);
   if (isDemo) {
-    const p = demoStore().products.find((x) => x.id === id);
-    if (!p) throw new AdminError("Produit introuvable.");
-    if (p.images.length >= 12) throw new AdminError("12 images maximum.");
-    p.images.push({ id: demoId("img"), ...img, position: p.images.length });
+    const c = demoColor(id, colorKey);
+    if (c.images.length >= MAX_IMAGES_PER_COLOR) throw new AdminError(`${MAX_IMAGES_PER_COLOR} photos maximum par couleur.`);
+    c.images.push({ id: demoId("img"), ...img, position: c.images.length });
     return;
   }
-  await connectDB();
-  const p = await Product.findById(id).select("images").lean();
-  if (!p) throw new AdminError("Produit introuvable.");
-  if (p.images.length >= 12) throw new AdminError("12 images maximum.");
-  await Product.updateOne({ _id: id }, { $push: { images: { ...img, position: p.images.length } } });
+  const c = await dbColor(id, colorKey);
+  if (c.images.length >= MAX_IMAGES_PER_COLOR) throw new AdminError(`${MAX_IMAGES_PER_COLOR} photos maximum par couleur.`);
+  await Product.updateOne(
+    { _id: id },
+    { $push: { "colors.$[c].images": { ...img, position: c.images.length } } },
+    { arrayFilters: [{ "c.key": colorKey }] },
+  );
 }
 
-/** Removes the image and returns its Cloudinary publicId (to delete it there). */
-export async function removeProductImage(id: string, imageId: string): Promise<string> {
+/** Removes the photo and returns its Cloudinary publicId (to delete it there). */
+export async function removeProductImage(id: string, colorKey: string, imageId: string): Promise<string> {
   assertId(id);
   if (isDemo) {
-    const p = demoStore().products.find((x) => x.id === id);
-    const img = p?.images.find((i) => i.id === imageId);
-    if (!p || !img) throw new AdminError("Image introuvable.");
-    p.images = p.images.filter((i) => i.id !== imageId).map((i, k) => ({ ...i, position: k }));
+    const c = demoColor(id, colorKey);
+    const img = c.images.find((i) => i.id === imageId);
+    if (!img) throw new AdminError("Photo introuvable.");
+    c.images = c.images.filter((i) => i.id !== imageId).map((i, k) => ({ ...i, position: k }));
     return img.publicId;
   }
-  if (!isObjectId(imageId)) throw new AdminError("Image invalide.");
-  await connectDB();
-  const p = await Product.findById(id).select("images").lean();
-  const img = p?.images.find((i) => String(i._id) === imageId);
-  if (!p || !img) throw new AdminError("Image introuvable.");
-  await Product.updateOne({ _id: id }, { $pull: { images: { _id: imageId } } });
-  await renumberImages(id);
-  return img.publicId ?? "";
+  if (!isObjectId(imageId)) throw new AdminError("Photo invalide.");
+  const c = await dbColor(id, colorKey);
+  const img = c.images.find((i) => i.id === imageId);
+  if (!img) throw new AdminError("Photo introuvable.");
+  await Product.updateOne({ _id: id }, { $pull: { "colors.$[c].images": { _id: new Types.ObjectId(imageId) } } }, { arrayFilters: [{ "c.key": colorKey }] });
+  await setImageOrder(id, colorKey, c.images.filter((i) => i.id !== imageId).map((i) => i.id));
+  return img.publicId;
 }
 
-async function renumberImages(id: string) {
-  const p = await Product.findById(id).select("images").lean();
-  if (!p) return;
-  const sorted = [...p.images].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-  await Product.updateOne({ _id: id }, { $set: Object.fromEntries(sorted.map((img) => [`images.${p.images.indexOf(img)}.position`, sorted.indexOf(img)])) });
+/** Writes positions 0..n for the given photo order (one targeted update). */
+async function setImageOrder(id: string, colorKey: string, orderedIds: string[]) {
+  if (!orderedIds.length) return;
+  const set: Record<string, number> = {};
+  const filters: Record<string, unknown>[] = [{ "c.key": colorKey }];
+  orderedIds.forEach((imgId, k) => {
+    set[`colors.$[c].images.$[i${k}].position`] = k;
+    filters.push({ [`i${k}._id`]: new Types.ObjectId(imgId) });
+  });
+  await Product.updateOne({ _id: id }, { $set: set }, { arrayFilters: filters });
 }
 
-export async function moveProductImage(id: string, imageId: string, dir: -1 | 1): Promise<void> {
+export async function moveProductImage(id: string, colorKey: string, imageId: string, dir: -1 | 1): Promise<void> {
   assertId(id);
   const reorder = (imgs: ProductImageDTO[]) => {
     const list = [...imgs].sort((a, b) => a.position - b.position);
@@ -237,37 +338,35 @@ export async function moveProductImage(id: string, imageId: string, dir: -1 | 1)
     const j = i + dir;
     if (i < 0 || j < 0 || j >= list.length) return null;
     [list[i], list[j]] = [list[j], list[i]];
-    return list.map((x, k) => ({ id: x.id, position: k }));
+    return list;
   };
   if (isDemo) {
-    const p = demoStore().products.find((x) => x.id === id);
-    if (!p) throw new AdminError("Produit introuvable.");
-    const order = reorder(p.images);
-    if (order) p.images = order.map((o) => ({ ...p.images.find((x) => x.id === o.id)!, position: o.position })).sort((a, b) => a.position - b.position);
+    const c = demoColor(id, colorKey);
+    const list = reorder(c.images);
+    if (list) c.images = list.map((x, k) => ({ ...x, position: k }));
     return;
   }
-  await connectDB();
-  const p = await Product.findById(id).select("images").lean();
-  if (!p) throw new AdminError("Produit introuvable.");
-  const order = reorder(p.images.map((i) => ({ id: String(i._id), url: i.url, publicId: i.publicId ?? "", alt: { fr: "", ar: "" }, position: i.position ?? 0 })));
-  if (!order) return;
-  const set: Record<string, number> = {};
-  p.images.forEach((img, idx) => (set[`images.${idx}.position`] = order.find((o) => o.id === String(img._id))!.position));
-  await Product.updateOne({ _id: id }, { $set: set });
+  const c = await dbColor(id, colorKey);
+  const list = reorder(c.images);
+  if (list) await setImageOrder(id, colorKey, list.map((x) => x.id));
 }
 
-export async function setProductImageAlt(id: string, imageId: string, alt: L10n): Promise<void> {
+export async function setProductImageAlt(id: string, colorKey: string, imageId: string, alt: L10n): Promise<void> {
   assertId(id);
   if (isDemo) {
-    const img = demoStore().products.find((x) => x.id === id)?.images.find((i) => i.id === imageId);
-    if (!img) throw new AdminError("Image introuvable.");
+    const img = demoColor(id, colorKey).images.find((i) => i.id === imageId);
+    if (!img) throw new AdminError("Photo introuvable.");
     img.alt = alt;
     return;
   }
-  if (!isObjectId(imageId)) throw new AdminError("Image invalide.");
-  await connectDB();
-  const res = await Product.updateOne({ _id: id, "images._id": imageId }, { $set: { "images.$.alt": alt } });
-  if (res.matchedCount !== 1) throw new AdminError("Image introuvable.");
+  if (!isObjectId(imageId)) throw new AdminError("Photo invalide.");
+  await dbColor(id, colorKey);
+  const res = await Product.updateOne(
+    { _id: id },
+    { $set: { "colors.$[c].images.$[i].alt": alt } },
+    { arrayFilters: [{ "c.key": colorKey }, { "i._id": new Types.ObjectId(imageId) }] },
+  );
+  if (res.matchedCount !== 1) throw new AdminError("Photo introuvable.");
 }
 
 /* ===================== Guides ===================== */
@@ -340,13 +439,13 @@ export async function deleteProduct(id: string): Promise<string[]> {
     const p = s.products.find((x) => x.id === id);
     if (!p) throw new AdminError("Produit introuvable.");
     s.products = s.products.filter((x) => x.id !== id);
-    return p.images.map((i) => i.publicId).filter(Boolean);
+    return p.colors.flatMap((c) => c.images.map((i) => i.publicId)).filter(Boolean);
   }
   await connectDB();
-  const p = await Product.findById(id).select("images").lean();
-  if (!p) throw new AdminError("Produit introuvable.");
+  const doc = await Product.findById(id).lean();
+  if (!doc) throw new AdminError("Produit introuvable.");
   await Product.deleteOne({ _id: id });
-  return (p.images ?? []).map((i) => i.publicId ?? "").filter(Boolean);
+  return toProductDTO(doc).colors.flatMap((c) => c.images.map((i) => i.publicId)).filter(Boolean);
 }
 
 /* ===================== Store settings ===================== */

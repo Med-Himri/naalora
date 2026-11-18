@@ -26,6 +26,12 @@ export default function Gallery({ images, thumbLabel }: { images: Img[]; thumbLa
 
   return (
     <div className="flex flex-col gap-3 lg:flex-row-reverse">
+      <div className="relative w-full">
+      {images.length > 1 && (
+        <span className="pointer-events-none absolute bottom-3 end-3 z-10 rounded-full bg-ink/70 px-2.5 py-1 text-xs font-semibold tabular-nums text-paper" aria-hidden="true" dir="ltr">
+          {active + 1}/{images.length}
+        </span>
+      )}
       <div
         ref={track}
         onScroll={onScroll}
@@ -44,8 +50,9 @@ export default function Gallery({ images, thumbLabel }: { images: Img[]; thumbLa
           </div>
         ))}
       </div>
+      </div>
       {images.length > 1 && (
-        <ul className="flex gap-2 lg:flex-col">
+        <ul className="-mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin] lg:mx-0 lg:max-h-[min(70vh,640px)] lg:flex-col lg:overflow-y-auto lg:overflow-x-visible lg:px-1">
           {images.map((img, i) => (
             <li key={img.id}>
               <button
@@ -53,7 +60,7 @@ export default function Gallery({ images, thumbLabel }: { images: Img[]; thumbLa
                 onClick={() => goTo(i)}
                 aria-label={thumbLabel.replace("{n}", String(i + 1))}
                 aria-current={active === i ? "true" : undefined}
-                className={`relative block h-20 w-16 overflow-hidden rounded-xl bg-sand ring-2 transition ${active === i ? "ring-ink" : "ring-transparent hover:ring-line"}`}
+                className={`relative block h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-sand ring-2 transition ${active === i ? "ring-ink" : "ring-transparent hover:ring-line"}`}
               >
                 <Image src={img.url} alt="" fill sizes="64px" className="object-cover" />
               </button>

@@ -18,68 +18,75 @@ export const seedCategories = [
 
 type SeedColor = {
   key: string;
-  code: string;
-  color: L;
+  name: L;
   hex: string;
   tone: "brown" | "pastel" | "dark" | "other";
-  price: number;
-  oldPrice: number;
-  badge: "best" | "new" | "none";
+  /** null = product price (349 / old 449) */
+  price: number | null;
+  oldPrice: number | null;
 };
 
 const colors: SeedColor[] = [
-  { key: "chocolat", code: "CHO", color: { fr: "Chocolat", ar: "شوكولا" }, hex: "#5a3a2b", tone: "brown", price: 349, oldPrice: 449, badge: "best" },
-  { key: "camel", code: "CAM", color: { fr: "Camel", ar: "كاميل" }, hex: "#c98c55", tone: "brown", price: 349, oldPrice: 449, badge: "best" },
-  { key: "bleu-ciel", code: "BLC", color: { fr: "Bleu Ciel", ar: "أزرق سماوي" }, hex: "#b7cfe2", tone: "pastel", price: 369, oldPrice: 469, badge: "new" },
-  { key: "cedre", code: "CED", color: { fr: "Cèdre", ar: "أرزي" }, hex: "#7a4a30", tone: "brown", price: 369, oldPrice: 469, badge: "new" },
-  { key: "noir", code: "NOI", color: { fr: "Noir", ar: "أسود" }, hex: "#1f1d1c", tone: "dark", price: 349, oldPrice: 449, badge: "none" },
-  { key: "rose", code: "ROS", color: { fr: "Rose", ar: "وردي" }, hex: "#e590ac", tone: "pastel", price: 369, oldPrice: 469, badge: "new" },
+  { key: "chocolat", name: { fr: "Chocolat", ar: "شوكولا" }, hex: "#5a3a2b", tone: "brown", price: null, oldPrice: null },
+  { key: "camel", name: { fr: "Camel", ar: "كاميل" }, hex: "#c98c55", tone: "brown", price: null, oldPrice: null },
+  { key: "bleu-ciel", name: { fr: "Bleu Ciel", ar: "أزرق سماوي" }, hex: "#b7cfe2", tone: "pastel", price: 369, oldPrice: 469 },
+  { key: "cedre", name: { fr: "Cèdre", ar: "أرزي" }, hex: "#7a4a30", tone: "brown", price: 369, oldPrice: 469 },
+  { key: "noir", name: { fr: "Noir", ar: "أسود" }, hex: "#1f1d1c", tone: "dark", price: null, oldPrice: null },
+  { key: "rose", name: { fr: "Rose", ar: "وردي" }, hex: "#e590ac", tone: "pastel", price: 369, oldPrice: 469 },
 ];
 
 const h = SITE.deliveryHours;
 
-export const seedProducts = colors.map((c, i) => ({
-  slug: `pantoufle-plateforme-${c.key}`,
-  sku: `NA-PPL-${c.code}`,
-  categorySlug: "pantoufles",
-  model: "pantoufle-plateforme",
-  name: { fr: `Pantoufle plateforme ${c.color.fr}`, ar: `بلغة بنعل مرتفع ${c.color.ar}` },
-  summary: {
-    fr: `Pantoufle plateforme en daim couleur ${c.color.fr.toLowerCase()}, doublée de peluche chaude, avec un col tressé en zigzag. Semelle légère et antidérapante de 5 cm. Disponible du 36 au 41, livrée partout au Maroc en ${h.min}–${h.max} h avec paiement à la livraison.`,
-    ar: `بلغة بنعل مرتفع من الجلد السويدي باللون ${c.color.ar}، ببطانة فرو دافئة وحافة مضفورة على شكل متعرج. نعل خفيف ومانع للانزلاق بارتفاع 5 سم. متوفرة من 36 إلى 41، وتصلك لجميع مدن المغرب خلال ${h.min}–${h.max} ساعة مع الدفع عند الاستلام.`,
-  },
-  description: {
-    fr: `La pantoufle plateforme ${c.color.fr} associe une tige en daim souple à une doublure peluche épaisse qui garde les pieds au chaud. Le col tressé en zigzag apporte une touche artisanale et maintient bien le pied.\n\nSa semelle plateforme de 5 cm est légère et antidérapante : vous gagnez quelques centimètres sans effort, à la maison comme pour une courte sortie par temps sec.`,
-    ar: `تجمع بلغة النعل المرتفع باللون ${c.color.ar} بين جزء علوي من الجلد السويدي الناعم وبطانة فرو سميكة تحافظ على دفء القدمين. الحافة المضفورة على شكل متعرج تضيف لمسة تقليدية وتثبت القدم جيداً.\n\nنعلها المرتفع بـ 5 سم خفيف ومانع للانزلاق: طول إضافي بدون تعب، في المنزل أو في خرجة قصيرة في طقس جاف.`,
-  },
-  specs: {
-    material: { fr: "Daim (tige)", ar: "جلد سويدي (الجزء العلوي)" },
-    lining: { fr: "Peluche chaude", ar: "فرو دافئ" },
-    soleHeight: { fr: "5 cm, antidérapante", ar: "5 سم، مانع للانزلاق" },
-    care: {
-      fr: "Brosse douce à sec, spray imperméabilisant. Pas de machine.",
-      ar: "فرشاة ناعمة على الجاف، بخاخ عازل للماء. لا للغسالة.",
+/** One product, six colours — the customer picks the colour on the product page. */
+export const seedProducts = [
+  {
+    slug: "pantoufle-plateforme",
+    sku: "NA-PPL",
+    categorySlug: "pantoufles",
+    name: { fr: "Pantoufle plateforme en daim", ar: "بلغة بنعل مرتفع من الجلد السويدي" },
+    summary: {
+      fr: `Pantoufle plateforme en daim, doublée de peluche chaude, avec un col tressé en zigzag. Semelle légère et antidérapante de 5 cm. 6 couleurs, du 36 au 41, livrée partout au Maroc en ${h.min}–${h.max} h avec paiement à la livraison.`,
+      ar: `بلغة بنعل مرتفع من الجلد السويدي، ببطانة فرو دافئة وحافة مضفورة على شكل متعرج. نعل خفيف ومانع للانزلاق بارتفاع 5 سم. 6 ألوان، من 36 إلى 41، تصلك لجميع مدن المغرب خلال ${h.min}–${h.max} ساعة مع الدفع عند الاستلام.`,
     },
-  },
-  colorName: c.color,
-  swatchHex: c.hex,
-  tone: c.tone,
-  price: c.price,
-  oldPrice: c.oldPrice,
-  badge: c.badge,
-  images: [1, 2].map((n) => ({
-    url: `/placeholders/${c.key}-${n}.svg`,
-    publicId: "",
-    alt: {
-      fr: `Pantoufle plateforme en daim ${c.color.fr}${n === 2 ? " — vue de côté" : ""}`,
-      ar: `بلغة بنعل مرتفع من الجلد السويدي ${c.color.ar}${n === 2 ? " — منظر جانبي" : ""}`,
+    description: {
+      fr: "La pantoufle plateforme associe une tige en daim souple à une doublure peluche épaisse qui garde les pieds au chaud. Le col tressé en zigzag apporte une touche artisanale et maintient bien le pied.\n\nSa semelle plateforme de 5 cm est légère et antidérapante : vous gagnez quelques centimètres sans effort, à la maison comme pour une courte sortie par temps sec.",
+      ar: "تجمع بلغة النعل المرتفع بين جزء علوي من الجلد السويدي الناعم وبطانة فرو سميكة تحافظ على دفء القدمين. الحافة المضفورة على شكل متعرج تضيف لمسة تقليدية وتثبت القدم جيداً.\n\nنعلها المرتفع بـ 5 سم خفيف ومانع للانزلاق: طول إضافي بدون تعب، في المنزل أو في خرجة قصيرة في طقس جاف.",
     },
-    position: n - 1,
-  })),
-  sizes: [36, 37, 38, 39, 40, 41].map((size) => ({ size, stock: 10 })),
-  active: true,
-  position: i + 1,
-}));
+    specs: {
+      material: { fr: "Daim (tige)", ar: "جلد سويدي (الجزء العلوي)" },
+      lining: { fr: "Peluche chaude", ar: "فرو دافئ" },
+      soleHeight: { fr: "5 cm, antidérapante", ar: "5 سم، مانع للانزلاق" },
+      care: {
+        fr: "Brosse douce à sec, spray imperméabilisant. Pas de machine.",
+        ar: "فرشاة ناعمة على الجاف، بخاخ عازل للماء. لا للغسالة.",
+      },
+    },
+    price: 349,
+    oldPrice: 449,
+    badge: "best" as const,
+    colors: colors.map((c, i) => ({
+      key: c.key,
+      name: c.name,
+      hex: c.hex,
+      tone: c.tone,
+      price: c.price,
+      oldPrice: c.oldPrice,
+      images: [1, 2].map((n) => ({
+        url: `/placeholders/${c.key}-${n}.svg`,
+        publicId: "",
+        alt: {
+          fr: `Pantoufle plateforme en daim ${c.name.fr}${n === 2 ? " — vue de côté" : ""}`,
+          ar: `بلغة بنعل مرتفع من الجلد السويدي ${c.name.ar}${n === 2 ? " — منظر جانبي" : ""}`,
+        },
+        position: n - 1,
+      })),
+      sizes: [36, 37, 38, 39, 40, 41].map((size) => ({ size, stock: 10 })),
+      position: i,
+    })),
+    active: true,
+    position: 1,
+  },
+];
 
 const sizeRowsFr = SITE.sizeChart.map((r) => `| ${r.size} | ${String(r.cm).replace(".", ",")} cm |`).join("\n");
 const sizeRowsAr = SITE.sizeChart.map((r) => `| ${r.size} | ${r.cm} سم |`).join("\n");

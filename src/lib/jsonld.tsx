@@ -2,6 +2,7 @@ import { SITE, absoluteUrl, displayPhone } from "./site";
 import { hreflang, type Locale } from "./locales";
 import type { CategoryDTO, GuideDTO, ProductDTO } from "./types";
 import { hasFreeThreshold, type ShippingSettings } from "./pricing";
+import { allSizes, colorStock, priceOf } from "./product";
 
 /** Server-rendered JSON-LD. "<" is escaped so the content can never close the script tag. */
 export function JsonLd({ data }: { data: object | object[] }) {
@@ -62,8 +63,8 @@ export function faqLd(items: { q: string; a: string }[]) {
   };
 }
 
+/** Product with colours → ProductGroup (variesBy colour) with one variant per colour (Google's variant format). */
 export function productLd(p: ProductDTO, lang: Locale, category: CategoryDTO | null, shipping: ShippingSettings) {
-  const inStock = p.sizes.some((s) => s.stock > 0);
   const url = absoluteUrl(`/${lang}/produit/${p.slug}`);
   const days = SITE.deliveryDays;
   const delivery = {
@@ -72,57 +73,73 @@ export function productLd(p: ProductDTO, lang: Locale, category: CategoryDTO | n
     transitTime: { "@type": "QuantitativeValue", minValue: days.min, maxValue: days.max, unitCode: "DAY" },
   };
   const destination = { "@type": "DefinedRegion", addressCountry: SITE.country };
+  const shippingDetails = [
+    {
+      "@type": "OfferShippingDetails",
+      shippingRate: { "@type": "MonetaryAmount", value: shipping.fee, currency: SITE.currency },
+      shippingDestination: destination,
+      deliveryTime: delivery,
+    },
+    ...(hasFreeThreshold(shipping)
+      ? [
+          {
+            "@type": "OfferShippingDetails",
+            shippingRate: { "@type": "MonetaryAmount", value: 0, currency: SITE.currency },
+            shippingDestination: destination,
+            deliveryTime: delivery,
+            eligibleTransactionVolume: { "@type": "PriceSpecification", minPrice: shipping.freeFrom, priceCurrency: SITE.currency },
+          },
+        ]
+      : []),
+  ];
+  const returnPolicy = {
+    "@type": "MerchantReturnPolicy",
+    applicableCountry: SITE.country,
+    returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: SITE.exchangeDays,
+    returnFees: "https://schema.org/FreeReturn",
+    refundType: "https://schema.org/ExchangeRefund",
+    returnMethod: "https://schema.org/ReturnByMail",
+  };
+  const sizes = allSizes(p).map(String);
   return {
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type": "ProductGroup",
     "@id": `${url}#product`,
     name: p.name[lang],
     description: p.summary[lang],
-    image: p.images.map((i) => abs(i.url)),
-    sku: p.sku || p.slug,
+    url,
+    productGroupID: p.sku || p.slug,
     brand: { "@type": "Brand", name: SITE.name },
-    color: p.colorName[lang],
     material: p.specs.material[lang] || undefined,
     category: category?.name[lang],
-    size: p.sizes.map((s) => String(s.size)),
-    offers: {
-      "@type": "Offer",
-      url,
-      priceCurrency: SITE.currency,
-      price: p.price.toFixed(2),
-      availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
-      seller: { "@id": ORG_ID },
-      acceptedPaymentMethod: { "@type": "PaymentMethod", name: "Cash on delivery" },
-      shippingDetails: [
-        {
-          "@type": "OfferShippingDetails",
-          shippingRate: { "@type": "MonetaryAmount", value: shipping.fee, currency: SITE.currency },
-          shippingDestination: destination,
-          deliveryTime: delivery,
+    variesBy: ["https://schema.org/color"],
+    hasVariant: p.colors.map((c) => {
+      const variantUrl = `${url}?couleur=${c.key}`;
+      return {
+        "@type": "Product",
+        "@id": `${variantUrl}#variant`,
+        name: `${p.name[lang]} — ${c.name[lang]}`,
+        description: p.summary[lang],
+        sku: `${p.sku || p.slug}-${c.key}`,
+        color: c.name[lang],
+        size: c.sizes.map((s) => String(s.size)),
+        image: c.images.map((i) => abs(i.url)),
+        offers: {
+          "@type": "Offer",
+          url: variantUrl,
+          priceCurrency: SITE.currency,
+          price: priceOf(p, c).toFixed(2),
+          availability: colorStock(c) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+          itemCondition: "https://schema.org/NewCondition",
+          seller: { "@id": ORG_ID },
+          acceptedPaymentMethod: { "@type": "PaymentMethod", name: "Cash on delivery" },
+          shippingDetails,
+          hasMerchantReturnPolicy: returnPolicy,
         },
-        ...(hasFreeThreshold(shipping)
-          ? [
-              {
-                "@type": "OfferShippingDetails",
-                shippingRate: { "@type": "MonetaryAmount", value: 0, currency: SITE.currency },
-                shippingDestination: destination,
-                deliveryTime: delivery,
-                eligibleTransactionVolume: { "@type": "PriceSpecification", minPrice: shipping.freeFrom, priceCurrency: SITE.currency },
-              },
-            ]
-          : []),
-      ],
-      hasMerchantReturnPolicy: {
-        "@type": "MerchantReturnPolicy",
-        applicableCountry: SITE.country,
-        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-        merchantReturnDays: SITE.exchangeDays,
-        returnFees: "https://schema.org/FreeReturn",
-        refundType: "https://schema.org/ExchangeRefund",
-        returnMethod: "https://schema.org/ReturnByMail",
-      },
-    },
+      };
+    }),
+    ...(sizes.length ? { size: sizes } : {}),
   };
 }
 

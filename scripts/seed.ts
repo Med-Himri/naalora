@@ -8,6 +8,7 @@ import { Category } from "../src/models/Category.ts";
 import { Product } from "../src/models/Product.ts";
 import { Guide } from "../src/models/Guide.ts";
 import { seedCategories, seedGuides, seedProducts } from "../src/lib/seed-data.ts";
+import { migrateColors } from "./migrate-colors.ts";
 
 const uri = process.env.MONGODB_URI;
 const force = process.argv.includes("--force");
@@ -23,6 +24,10 @@ async function main() {
   const { Order } = await import("../src/models/Order.ts");
   await Order.syncIndexes();
   console.log("✓ Indexes synced");
+
+  // Old format (one product per colour) → products with colours, before inserting anything.
+  const mig = await migrateColors((m) => console.log(m));
+  if (mig.merged + mig.converted) console.log(`✓ Migrated to colours — merged ${mig.merged}, converted ${mig.converted}`);
 
   const report = { inserted: 0, updated: 0, skipped: 0 };
   async function upsert(model: mongoose.Model<any>, slug: string, data: Record<string, unknown>) { // eslint-disable-line @typescript-eslint/no-explicit-any

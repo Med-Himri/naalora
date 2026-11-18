@@ -53,7 +53,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         <ul className="mt-6 space-y-3">
           {shown.map((o) => {
             const t = getDictionary(o.locale);
-            const items = o.items.map((i) => `- ${i.qty} × ${i.name} (${o.locale === "ar" ? "المقاس" : "taille"} ${i.size})`).join("\n");
+            const items = o.items.map((i) => `- ${i.qty} × ${i.name}${i.color.name ? ` — ${i.color.name}` : ""} (${o.locale === "ar" ? "المقاس" : "taille"} ${i.size})`).join("\n");
             const wa = fmt(t.orderConfirmMessage, { name: o.customer.name, ref: o.ref, items, total: formatPrice(o.total, o.locale), city: o.customer.city });
             const phoneDigits = o.customer.phone.replace(/\D/g, "");
             return (
@@ -74,7 +74,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                         <tbody className="divide-y divide-line">
                           {o.items.map((i, k) => (
                             <tr key={k}>
-                              <td className="py-2"><Link href={`/fr/produit/${i.slug}`} target="_blank" className="hover:underline">{i.name}</Link></td>
+                              <td className="py-2"><Link href={`/fr/produit/${i.slug}${i.color.key ? `?couleur=${i.color.key}` : ""}`} target="_blank" className="hover:underline">{i.name}</Link>{i.color.name && <span className="block text-xs text-muted">{i.color.name}</span>}</td>
                               <td className="py-2">T. {i.size}</td>
                               <td className="py-2">× {i.qty}</td>
                               <td className="py-2 text-end tabular-nums">{formatPrice(i.unitPrice * i.qty, "fr")}</td>

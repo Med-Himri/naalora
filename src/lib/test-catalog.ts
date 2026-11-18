@@ -35,51 +35,56 @@ type Model = {
   colors: { key: string; name: L10n; hex: string; tone: Tone; photos: string[] }[];
 };
 
-function expand(m: Model, startPosition: number): ProductDTO[] {
-  return m.colors.map((c, i) => ({
-    id: `test-${m.code}-${c.key}`,
-    slug: `${m.slug}-${c.key}`,
-    sku: `NA-${m.code}-${c.key.slice(0, 3).toUpperCase()}`,
+/** One product per model, each colour with its own photos and stock. */
+function toProduct(m: Model, position: number): ProductDTO {
+  return {
+    id: `test-${m.code}`,
+    slug: m.slug,
+    sku: `NA-${m.code}`,
     categoryId: m.categoryId,
-    model: m.slug,
-    name: { fr: `${m.name.fr} ${c.name.fr}`, ar: `${m.name.ar} ${c.name.ar}` },
+    name: m.name,
     summary: m.summary,
     description: m.description,
     specs: m.specs,
-    colorName: c.name,
-    swatchHex: c.hex,
-    tone: c.tone,
     price: m.price,
     oldPrice: m.oldPrice,
-    badge: i === 0 ? m.badge : "none",
-    images: c.photos.map((p, k) => ({
-      id: `test-img-${m.code}-${c.key}-${k}`,
-      url: photo(p),
-      publicId: "",
-      alt: { fr: `${m.name.fr} ${c.name.fr}${k ? " — autres coloris" : ""}`, ar: `${m.name.ar} ${c.name.ar}${k ? " — ألوان أخرى" : ""}` },
-      position: k,
+    badge: m.badge,
+    colors: m.colors.map((c, i) => ({
+      id: `test-${m.code}-${c.key}`,
+      key: c.key,
+      name: c.name,
+      hex: c.hex,
+      tone: c.tone,
+      price: null,
+      oldPrice: null,
+      images: c.photos.map((p, k) => ({
+        id: `test-img-${m.code}-${c.key}-${k}`,
+        url: photo(p),
+        publicId: "",
+        alt: { fr: `${m.name.fr} ${c.name.fr}${k ? " — autres coloris" : ""}`, ar: `${m.name.ar} ${c.name.ar}${k ? " — ألوان أخرى" : ""}` },
+        position: k,
+      })),
+      sizes: m.sizes.map((s) => ({ ...s })),
+      position: i,
     })),
-    sizes: m.sizes.map((s) => ({ ...s })),
     active: true,
-    position: startPosition + i,
+    position,
     createdAt: now,
     updatedAt: now,
-  }));
+  };
 }
 
 export function applyTestCatalog(store: Store): void {
-  // 1) Real photos for the 6 platform slippers (same colours as the seed).
-  for (const p of store.products) {
-    const key = p.slug.replace("pantoufle-plateforme-", "");
-    if (p.slug.startsWith("pantoufle-plateforme-")) {
-      p.images = [`platform-${key}`, "platform-all"].map((name, k) => ({
-        id: `test-img-${key}-${k}`,
-        url: photo(name),
-        publicId: "",
-        alt: k ? { fr: "Pantoufles plateforme — toutes les couleurs", ar: "بلغات بنعل مرتفع — كل الألوان" } : p.images[0]?.alt ?? { fr: p.name.fr, ar: p.name.ar },
-        position: k,
-      }));
-    }
+  // 1) Real photos for the colours of the platform slipper (same colours as the seed).
+  const platform = store.products.find((p) => p.slug === "pantoufle-plateforme");
+  for (const c of platform?.colors ?? []) {
+    c.images = [`platform-${c.key}`, "platform-all"].map((name, k) => ({
+      id: `test-img-${c.key}-${k}`,
+      url: photo(name),
+      publicId: "",
+      alt: k ? { fr: "Pantoufles plateforme — toutes les couleurs", ar: "بلغات بنعل مرتفع — كل الألوان" } : c.images[0]?.alt ?? { fr: c.name.fr, ar: c.name.ar },
+      position: k,
+    }));
   }
 
   const slippers = store.categories.find((c) => c.slug === "pantoufles");
@@ -200,9 +205,5 @@ export function applyTestCatalog(store: Store): void {
   ];
 
   let position = store.products.length + 1;
-  for (const m of models) {
-    const items = expand(m, position);
-    position += items.length;
-    store.products.push(...items);
-  }
+  for (const m of models) store.products.push(toProduct(m, position++));
 }

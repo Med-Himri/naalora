@@ -83,7 +83,8 @@ export async function saveProductAction(_prev: AdminResult | null, fd: FormData)
     const id = str(fd, "id", 64) || null;
     const { data, errors } = parseProduct(fd);
     if (Object.keys(errors).length) return FAIL("Corrigez les champs en rouge.", errors);
-    const savedId = await saveProduct(id, data);
+    const { id: savedId, removedPublicIds } = await saveProduct(id, data);
+    await Promise.all(removedPublicIds.map(destroyImage));
     catalogChanged();
     if (!id) redirect(`/admin/produits/${savedId}?created=1`);
     return OK("Produit enregistré.");
@@ -104,10 +105,10 @@ export async function getUploadSignature(folder: Folder): Promise<{ ok: true; si
   return { ok: true, sig: signUpload(folder) };
 }
 
-export async function addProductImageAction(productId: string, url: string, publicId: string, alt: { fr: string; ar: string }): Promise<AdminResult> {
+export async function addProductImageAction(productId: string, colorKey: string, url: string, publicId: string, alt: { fr: string; ar: string }): Promise<AdminResult> {
   return guard(async () => {
     if (!isOwnUpload(String(url), String(publicId), "products")) return FAIL("Image refusée (origine inconnue).");
-    await addProductImage(String(productId).slice(0, 64), {
+    await addProductImage(String(productId).slice(0, 64), String(colorKey).slice(0, 60), {
       url: String(url),
       publicId: String(publicId),
       alt: { fr: String(alt?.fr ?? "").slice(0, 160), ar: String(alt?.ar ?? "").slice(0, 160) },
@@ -117,18 +118,18 @@ export async function addProductImageAction(productId: string, url: string, publ
   }) as Promise<AdminResult>;
 }
 
-export async function deleteProductImageAction(productId: string, imageId: string): Promise<AdminResult> {
+export async function deleteProductImageAction(productId: string, colorKey: string, imageId: string): Promise<AdminResult> {
   return guard(async () => {
-    const publicId = await removeProductImage(String(productId).slice(0, 64), String(imageId).slice(0, 64));
+    const publicId = await removeProductImage(String(productId).slice(0, 64), String(colorKey).slice(0, 60), String(imageId).slice(0, 64));
     await destroyImage(publicId);
     catalogChanged();
     return OK("Image supprimée.");
   }) as Promise<AdminResult>;
 }
 
-export async function moveProductImageAction(productId: string, imageId: string, dir: number): Promise<AdminResult> {
+export async function moveProductImageAction(productId: string, colorKey: string, imageId: string, dir: number): Promise<AdminResult> {
   return guard(async () => {
-    await moveProductImage(String(productId).slice(0, 64), String(imageId).slice(0, 64), dir < 0 ? -1 : 1);
+    await moveProductImage(String(productId).slice(0, 64), String(colorKey).slice(0, 60), String(imageId).slice(0, 64), dir < 0 ? -1 : 1);
     catalogChanged();
     return OK("Ordre mis à jour.");
   }) as Promise<AdminResult>;
@@ -136,7 +137,7 @@ export async function moveProductImageAction(productId: string, imageId: string,
 
 export async function saveImageAltAction(_prev: AdminResult | null, fd: FormData): Promise<AdminResult> {
   return guard(async () => {
-    await setProductImageAlt(str(fd, "productId", 64), str(fd, "imageId", 64), { fr: str(fd, "alt_fr", 160), ar: str(fd, "alt_ar", 160) });
+    await setProductImageAlt(str(fd, "productId", 64), str(fd, "colorKey", 60), str(fd, "imageId", 64), { fr: str(fd, "alt_fr", 160), ar: str(fd, "alt_ar", 160) });
     catalogChanged();
     return OK("Texte alternatif enregistré.");
   }) as Promise<AdminResult>;

@@ -41,7 +41,7 @@ export default function CheckoutForm({ lang, t, cities, whatsappNumber, shipping
       clear();
     } else if (res.status === "error" && res.adjust) {
       for (const a of res.adjust) {
-        const key = `${a.productId}:${a.size}`;
+        const key = `${a.productId}:${a.colorKey}:${a.size}`;
         if (a.available <= 0) remove(key);
         else setQty(key, a.available);
       }
@@ -109,7 +109,7 @@ export default function CheckoutForm({ lang, t, cities, whatsappNumber, shipping
 
       <form ref={formRef} action={action} noValidate className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_1fr]">
         <input type="hidden" name="locale" value={lang} />
-        <input type="hidden" name="items" value={JSON.stringify(items.map((i) => ({ productId: i.productId, size: i.size, qty: i.qty })))} />
+        <input type="hidden" name="items" value={JSON.stringify(items.map((i) => ({ productId: i.productId, colorKey: i.colorKey, size: i.size, qty: i.qty })))} />
         {/* Honeypot (hidden from people and assistive tech) */}
         <div aria-hidden="true" className="absolute -start-[9999px] h-px w-px overflow-hidden">
           <label>Website<input type="text" name="website" tabIndex={-1} autoComplete="off" /></label>

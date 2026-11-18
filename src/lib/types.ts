@@ -17,25 +17,36 @@ export type CategoryDTO = {
 export type ProductImageDTO = { id: string; url: string; publicId: string; alt: L10n; position: number };
 export type SizeDTO = { size: number; stock: number };
 
+export type ColorDTO = {
+  id: string;
+  /** Stable id used in URLs (?couleur=), carts and orders */
+  key: string;
+  name: L10n;
+  hex: string;
+  tone: Tone;
+  /** null = product price */
+  price: number | null;
+  oldPrice: number | null;
+  images: ProductImageDTO[];
+  sizes: SizeDTO[];
+  position: number;
+};
+
 export type ProductDTO = {
   id: string;
   slug: string;
   sku: string;
   categoryId: string;
-  /** Model code: products with the same model are colours of each other ("" = whole category) */
-  model: string;
   name: L10n;
   summary: L10n;
   description: L10n;
   specs: { material: L10n; lining: L10n; soleHeight: L10n; care: L10n };
-  colorName: L10n;
-  swatchHex: string;
-  tone: Tone;
+  /** Base price (a colour can override it) */
   price: number;
   oldPrice: number | null;
   badge: Badge;
-  images: ProductImageDTO[];
-  sizes: SizeDTO[];
+  /** At least one colour (old single-colour products are converted on read) */
+  colors: ColorDTO[];
   active: boolean;
   position: number;
   createdAt: string;
@@ -54,7 +65,7 @@ export type GuideDTO = {
   updatedAt: string;
 };
 
-export type OrderItemDTO = { productId: string; slug: string; name: string; size: number; qty: number; unitPrice: number };
+export type OrderItemDTO = { productId: string; slug: string; name: string; color: { key: string; name: string }; size: number; qty: number; unitPrice: number };
 
 export type OrderDTO = {
   id: string;

@@ -59,25 +59,97 @@ function checkSlug(raw: string, fallback: string, errors: FieldErrors): string {
 
 /* ---------- Product ---------- */
 
+export type ColorInput = {
+  /** Existing colour id (keeps its photos), or "" for a new colour */
+  id: string;
+  key: string;
+  name: L10n;
+  hex: string;
+  tone: Tone;
+  price: number | null;
+  oldPrice: number | null;
+  sizes: { size: number; stock: number }[];
+};
+
 export type ProductInput = {
   slug: string;
   sku: string;
   categoryId: string;
-  model: string;
   name: L10n;
   summary: L10n;
   description: L10n;
   specs: { material: L10n; lining: L10n; soleHeight: L10n; care: L10n };
-  colorName: L10n;
-  swatchHex: string;
-  tone: Tone;
   price: number;
   oldPrice: number | null;
   badge: Badge;
-  sizes: { size: number; stock: number }[];
+  colors: ColorInput[];
   active: boolean;
   position: number;
 };
+
+const cleanStr = (v: unknown, max: number) => cleanText(typeof v === "string" ? v : "", max);
+const toInt = (v: unknown): number | null => {
+  if (v === "" || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isInteger(n) ? n : NaN;
+};
+
+/** Colours come as one JSON field built by the form; every value is checked here. */
+function parseColors(raw: unknown, errors: FieldErrors): ColorInput[] {
+  let list: unknown;
+  try {
+    list = JSON.parse(String(raw ?? "[]"));
+  } catch {
+    errors.colors = "Couleurs illisibles. Rechargez la page.";
+    return [];
+  }
+  if (!Array.isArray(list) || list.length === 0) {
+    errors.colors = "Ajoutez au moins une couleur.";
+    return [];
+  }
+  if (list.length > 30) errors.colors = "30 couleurs maximum.";
+  const out: ColorInput[] = [];
+  list.slice(0, 30).forEach((x: Record<string, unknown>, i) => {
+    const n = i + 1;
+    const name = { fr: cleanStr((x?.name as L10n)?.fr, 40), ar: cleanStr((x?.name as L10n)?.ar, 40) };
+    if (!name.fr || !name.ar) errors.colors = `Couleur ${n} : nom FR et AR obligatoires.`;
+    const hex = cleanStr(x?.hex, 7).toLowerCase();
+    if (!HEX_RE.test(hex)) errors.colors = `Couleur ${n} : code couleur invalide (#rrggbb).`;
+    const tone = cleanStr(x?.tone, 10) as Tone;
+    if (!TONES.includes(tone)) errors.colors = `Couleur ${n} : teinte invalide.`;
+    const price = toInt(x?.price);
+    const oldPrice = toInt(x?.oldPrice);
+    if (Number.isNaN(price) || (price !== null && (price < 0 || price > 100000))) errors.colors = `Couleur ${n} : prix invalide (vide = prix du produit).`;
+    if (Number.isNaN(oldPrice) || (oldPrice !== null && (oldPrice < 0 || oldPrice > 100000))) errors.colors = `Couleur ${n} : ancien prix invalide.`;
+    if (price !== null && oldPrice !== null && !Number.isNaN(price) && !Number.isNaN(oldPrice) && oldPrice <= price) errors.colors = `Couleur ${n} : l’ancien prix doit être supérieur au prix.`;
+    const sizes: { size: number; stock: number }[] = [];
+    for (const row of Array.isArray(x?.sizes) ? (x.sizes as Record<string, unknown>[]).slice(0, 30) : []) {
+      if ((row?.size === "" || row?.size === undefined) && (row?.stock === "" || row?.stock === undefined)) continue;
+      const size = Number(row?.size);
+      const stock = row?.stock === "" ? 0 : Number(row?.stock);
+      if (!Number.isInteger(size) || size < 15 || size > 50) errors.colors = `Couleur ${n} : taille invalide « ${String(row?.size)} » (15 à 50).`;
+      else if (!Number.isInteger(stock) || stock < 0 || stock > 100000) errors.colors = `Couleur ${n} : stock invalide pour la taille ${size}.`;
+      else if (sizes.some((s) => s.size === size)) errors.colors = `Couleur ${n} : la taille ${size} apparaît deux fois.`;
+      else sizes.push({ size, stock });
+    }
+    if (!sizes.length) errors.colors = `Couleur ${n} : ajoutez au moins une taille.`;
+    const key = slugify(cleanStr(x?.key, 60)) || slugify(name.fr) || `couleur-${n}`;
+    out.push({
+      id: cleanStr(x?.id, 64),
+      key,
+      name,
+      hex,
+      tone,
+      price: Number.isNaN(price) ? null : price,
+      oldPrice: Number.isNaN(oldPrice) ? null : oldPrice,
+      sizes: sizes.sort((a, b) => a.size - b.size),
+    });
+  });
+  const keys = out.map((c) => c.key);
+  const dup = keys.find((k, i) => keys.indexOf(k) !== i);
+  if (dup) errors.colors = `Deux couleurs ont le même nom (« ${dup} »).`;
+  return out;
+}
 
 export function parseProduct(fd: FormData): { data: ProductInput; errors: FieldErrors } {
   const errors: FieldErrors = {};
@@ -91,38 +163,16 @@ export function parseProduct(fd: FormData): { data: ProductInput; errors: FieldE
   if (Number.isNaN(oldPrice)) errors.oldPrice = "Ancien prix invalide.";
   else if (oldPrice !== null && price !== null && !Number.isNaN(price) && oldPrice <= price) errors.oldPrice = "L’ancien prix doit être supérieur au prix.";
 
-  const swatchHex = str(fd, "swatchHex", 7);
-  if (!HEX_RE.test(swatchHex)) errors.swatchHex = "Couleur invalide (#rrggbb).";
-  const tone = str(fd, "tone", 10) as Tone;
-  if (!TONES.includes(tone)) errors.tone = "Teinte invalide.";
   const badge = str(fd, "badge", 10) as Badge;
   if (!BADGES.includes(badge)) errors.badge = "Badge invalide.";
   const categoryId = str(fd, "categoryId", 64);
   if (!categoryId) errors.categoryId = "Choisissez une catégorie.";
   const position = int(fd, "position", 0, 10000);
 
-  // Sizes: parallel lists "size" / "stock"
-  const sizesRaw = fd.getAll("size").map((v) => String(v).trim());
-  const stocksRaw = fd.getAll("stock").map((v) => String(v).trim());
-  const sizes: { size: number; stock: number }[] = [];
-  if (sizesRaw.length > 30) errors.sizes = "30 tailles maximum.";
-  sizesRaw.forEach((s, i) => {
-    if (s === "" && (stocksRaw[i] ?? "") === "") return; // empty row
-    const size = Number(s);
-    const stock = Number(stocksRaw[i] ?? "0");
-    if (!Number.isInteger(size) || size < 15 || size > 50) errors.sizes = `Taille invalide : « ${s} » (entier entre 15 et 50).`;
-    else if (!Number.isInteger(stock) || stock < 0 || stock > 100000) errors.sizes = `Stock invalide pour la taille ${size}.`;
-    else if (sizes.some((x) => x.size === size)) errors.sizes = `La taille ${size} apparaît deux fois.`;
-    else sizes.push({ size, stock });
-  });
-  if (!sizes.length && !errors.sizes) errors.sizes = "Ajoutez au moins une taille.";
-  sizes.sort((a, b) => a.size - b.size);
-
   const data: ProductInput = {
     slug: checkSlug(str(fd, "slug", 80), name.fr, errors),
     sku: str(fd, "sku", 40),
     categoryId,
-    model: slugify(str(fd, "model", 80)),
     name,
     summary: l10n(fd, "summary", 600, true),
     description: l10n(fd, "description", 5000, true),
@@ -132,13 +182,10 @@ export function parseProduct(fd: FormData): { data: ProductInput; errors: FieldE
       soleHeight: l10n(fd, "soleHeight", 120),
       care: l10n(fd, "care", 300),
     },
-    colorName: l10n(fd, "colorName", 60),
-    swatchHex: swatchHex.toLowerCase(),
-    tone,
     price: price ?? 0,
     oldPrice: oldPrice === null || Number.isNaN(oldPrice) ? null : oldPrice,
     badge,
-    sizes,
+    colors: parseColors(fd.get("colors"), errors),
     active: bool(fd, "active"),
     position: position === null || Number.isNaN(position) ? 0 : position,
   };

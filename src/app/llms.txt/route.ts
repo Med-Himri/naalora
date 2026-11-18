@@ -2,6 +2,7 @@ import { getActiveProducts, getCategories, getPublishedGuides, getShippingSettin
 import { getDictionaryLive, shippingTexts } from "@/lib/i18n";
 import { SITE, absoluteUrl, displayPhone } from "@/lib/site";
 import { formatPrice } from "@/lib/format";
+import { priceOf } from "@/lib/product";
 
 export const revalidate = 3600;
 
@@ -9,7 +10,7 @@ export const revalidate = 3600;
 export async function GET() {
   const [products, categories, guides, shipping] = await Promise.all([getActiveProducts(), getCategories(), getPublishedGuides(), getShippingSettings()]);
   const fr = await getDictionaryLive("fr");
-  const prices = products.map((p) => p.price);
+  const prices = products.flatMap((p) => p.colors.map((c) => priceOf(p, c)));
   const min = Math.min(...prices);
   const max = Math.max(...prices);
   const range = !prices.length ? "" : min === max ? `à ${formatPrice(min, "fr")}` : `de ${min} à ${formatPrice(max, "fr")}`;
@@ -35,8 +36,11 @@ export async function GET() {
     "",
     "## Produits",
     ...products.map((p) => {
-      const sizes = p.sizes.filter((s) => s.stock > 0).map((s) => s.size);
-      return `- [${p.name.fr}](${absoluteUrl(`/fr/produit/${p.slug}`)}): ${formatPrice(p.price, "fr")}${p.oldPrice && p.oldPrice > p.price ? ` (au lieu de ${formatPrice(p.oldPrice, "fr")})` : ""}, tailles disponibles ${sizes.length ? sizes.join(", ") : "aucune (épuisé)"}.`;
+      const colors = p.colors.map((c) => {
+        const sizes = c.sizes.filter((s) => s.stock > 0).map((s) => s.size);
+        return `${c.name.fr} (${formatPrice(priceOf(p, c), "fr")}${sizes.length ? `, tailles ${sizes.join(", ")}` : ", épuisé"})`;
+      });
+      return `- [${p.name.fr}](${absoluteUrl(`/fr/produit/${p.slug}`)}): ${p.colors.length} couleur(s) — ${colors.join(" ; ")}.`;
     }),
     "",
     "## Guides",

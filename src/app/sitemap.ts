@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(p.updatedAt),
       priority: 0.8,
       changeFrequency: "weekly" as const,
-      images: p.images.map((i) => (i.url.startsWith("http") ? i.url : absoluteUrl(i.url))),
+      images: p.colors.flatMap((c) => c.images).map((i) => (i.url.startsWith("http") ? i.url : absoluteUrl(i.url))),
     })),
     { path: paths.guides, lastModified: guidesDate, priority: 0.6, changeFrequency: "weekly" },
     ...guides.map((g) => ({ path: paths.guide(g.slug), lastModified: new Date(g.updatedAt), priority: 0.6, changeFrequency: "monthly" as const })),

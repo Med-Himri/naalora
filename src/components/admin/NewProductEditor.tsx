@@ -5,6 +5,7 @@ import AiProductAssistant from "./AiProductAssistant";
 import ProductForm from "./ProductForm";
 import type { AiDraftResult } from "@/app/admin/actions";
 import type { CategoryDTO, ProductDTO } from "@/lib/types";
+import { slugKey } from "@/lib/product";
 
 type Draft = Extract<AiDraftResult, { ok: true }>["draft"];
 
@@ -16,20 +17,29 @@ function draftToProduct(d: Draft, categories: CategoryDTO[]): ProductDTO {
     slug: d.slug,
     sku: "",
     categoryId: d.categoryId ?? categories[0]?.id ?? "",
-    model: d.model,
     name: d.name,
     summary: d.summary,
     description: d.description,
     specs: d.specs,
-    colorName: d.colorName,
-    swatchHex: d.swatchHex,
-    tone: d.tone,
     price: d.price ?? 0,
     oldPrice: d.oldPrice,
     badge: "new",
-    images: [],
-    // Stock is never invented: 0 until you fill it in.
-    sizes: (d.sizes.length ? d.sizes : [36, 37, 38, 39, 40, 41]).map((size) => ({ size, stock: 0 })),
+    // The colour seen on the photo; add the other colours in the form.
+    colors: [
+      {
+        id: "",
+        key: slugKey(d.colorName.fr) || "couleur-1",
+        name: d.colorName.fr || d.colorName.ar ? d.colorName : { fr: "", ar: "" },
+        hex: d.swatchHex,
+        tone: d.tone,
+        price: null,
+        oldPrice: null,
+        images: [],
+        // Stock is never invented: 0 until you fill it in.
+        sizes: (d.sizes.length ? d.sizes : [36, 37, 38, 39, 40, 41]).map((size) => ({ size, stock: 0 })),
+        position: 0,
+      },
+    ],
     active: true,
     position: 0,
     createdAt: now,
@@ -52,7 +62,7 @@ export default function NewProductEditor({ categories, ai }: { categories: Categ
       />
       {draft && (
         <p className="rounded-2xl bg-sand px-4 py-3 text-sm">
-          Brouillon IA chargé ci-dessous. <strong>Le stock est à 0</strong> : renseignez-le pour chaque taille (sinon la taille s’affiche « Épuisé »).
+          Brouillon IA chargé ci-dessous avec la couleur de la photo. <strong>Le stock est à 0</strong> : renseignez-le pour chaque taille (sinon « Épuisé »). Ajoutez les autres couleurs avec « + Ajouter une couleur ».
           {draft.price === 0 && " Indiquez aussi le prix."}
         </p>
       )}

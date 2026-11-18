@@ -56,11 +56,19 @@ Les secrets ne sont lus que côté serveur (jamais dans le code client ni dans u
 npm run seed
 ```
 
-Le script crée la catégorie « Pantoufles », les 6 pantoufles (tailles 36–41, stock 10) et 3 guides **en brouillon** (à relire puis publier dans l’admin), et crée les index. Il n’ajoute que ce qui manque : vos modifications ne sont jamais écrasées. Pour réinitialiser les éléments d’exemple :
+Le script crée la catégorie « Pantoufles », le produit « Pantoufle plateforme » en **6 couleurs** (tailles 36–41, stock 10 par taille) et 3 guides **en brouillon** (à relire puis publier dans l’admin), et crée les index. Il n’ajoute que ce qui manque : vos modifications ne sont jamais écrasées. Pour réinitialiser les éléments d’exemple :
 
 ```bash
 npm run seed -- --force
 ```
+
+**Base créée avant les couleurs ?** (un produit par couleur, ex. `pantoufle-plateforme-chocolat`, `…-camel`…) — lancez une fois :
+
+```bash
+npm run migrate
+```
+
+Les produits qui partagent le même code modèle sont fusionnés en **un produit avec plusieurs couleurs** (stock, photos et prix conservés) ; les autres deviennent des produits à une couleur. `npm run seed` le fait aussi automatiquement.
 
 Les commandes utilisent une **transaction** MongoDB (stock vérifié et décrémenté de façon atomique) : Atlas le permet, y compris en M0.
 
@@ -92,7 +100,7 @@ Les pages sont générées statiquement et revalidées : toute modification dans
 ## Administration (`/admin`, en français)
 
 - **Commandes** : statistiques, filtre par statut, détail, bouton WhatsApp avec message de confirmation pré-rempli (dans la langue du client), appel, changement de statut. Passer une commande en « Annulé » remet les articles en stock.
-- **Produits** : créer, modifier, activer/désactiver, images (ajout, ordre, suppression, texte alternatif FR/AR), tailles + stock, caractéristiques, résumé.
+- **Produits** : créer, modifier, activer/désactiver, supprimer. Un produit a **plusieurs couleurs** : chaque couleur a son nom FR/AR, sa pastille, sa teinte, un prix facultatif (sinon celui du produit), ses tailles + stock et ses photos (ajout, ordre, suppression, texte alternatif FR/AR, 12 max par couleur). Le client choisit la couleur sur la fiche (`?couleur=…` dans l’URL).
 - **Catégories** : créer, modifier (intro FR/AR), réordonner.
 - **Guides** : créer, modifier (Markdown FR/AR), image de couverture, publier/dépublier.
 

@@ -3,6 +3,7 @@ import { getCategoryBySlug, getGuideBySlug, getProductBySlug } from "@/lib/data"
 import { getDictionary } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
 import { formatPrice } from "@/lib/format";
+import { minPriceOf } from "@/lib/product";
 
 /**
  * Share images (1200×630) and the PNG logo for structured data.
@@ -99,7 +100,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ parts: string[
   if (kind === "product" && slug) {
     const p = await getProductBySlug(slug);
     if (!p) return new Response("Not found", { status: 404 });
-    return card(latin ? p.name.fr : null, latin ? formatPrice(p.price, "fr") : null);
+    return card(latin ? p.name.fr : null, latin ? formatPrice(minPriceOf(p), "fr") : null);
   }
 
   if (kind === "page") {

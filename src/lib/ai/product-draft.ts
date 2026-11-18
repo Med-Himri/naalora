@@ -27,7 +27,7 @@ const h = SITE.deliveryHours;
 
 function systemPrompt(categories: { slug: string; name: string }[], shippingSentence: string): string {
   return `Tu es le rédacteur e-commerce de ${SITE.name}, boutique de chaussures en ligne basée à ${SITE.city.fr} (Maroc).
-Tu rédiges la fiche d’UN produit (une seule couleur) en français ET en arabe standard simple, compréhensible au Maroc.
+Tu rédiges la fiche d’UN produit en français ET en arabe standard simple, compréhensible au Maroc. Un produit peut exister en plusieurs couleurs : le nom et le slug ne contiennent JAMAIS la couleur ; la couleur de la photo va dans color_fr / color_ar.
 
 Faits de la boutique (à utiliser tels quels, ne pas en inventer d’autres) :
 - Livraison partout au Maroc en ${h.min}–${h.max} h. ${shippingSentence}
@@ -38,11 +38,11 @@ Règles :
 - N’écris JAMAIS de nom de marque, de logo ou de marque déposée vus sur la photo ou dans la note (ex. : UGG, Dior, Nike…). Décris le style avec des mots génériques.
 - N’invente pas de matière précise si elle n’est pas visible ou indiquée : reste générique (ex. « similicuir », « suédine », « textile »).
 - Prix et tailles : uniquement s’ils sont dans la note, sinon null. Ne devine jamais un prix.
-- summary : 2 à 3 phrases factuelles (type, matière, détail clé, semelle, tailles si connues), la dernière mentionne la livraison ${h.min}–${h.max} h partout au Maroc et le paiement à la livraison.
+- summary : 2 à 3 phrases factuelles valables pour toutes les couleurs (type, matière, détail clé, semelle, tailles si connues ; pas la couleur), la dernière mentionne la livraison ${h.min}–${h.max} h partout au Maroc et le paiement à la livraison.
 - description : 2 courts paragraphes séparés par une ligne vide.
-- name : « <type> <détail> <Couleur> », ex. « Bottine Chelsea à boucle Beige ». Max 60 caractères.
-- slug : français, minuscules, tirets, sans accents, se terminant par la couleur (ex. « bottine-chelsea-boucle-beige »).
-- model : code du modèle sans la couleur (ex. « bottine-chelsea-boucle »), pour regrouper les couleurs.
+- name : « <type> <détail> », SANS la couleur, ex. « Bottine Chelsea à boucle ». Max 60 caractères.
+- slug : français, minuscules, tirets, sans accents, SANS la couleur (ex. « bottine-chelsea-boucle »).
+- model : identique au slug.
 - swatch_hex : la couleur réelle du produit estimée sur la photo (#rrggbb), pas une couleur nommée générique.
 - tone : "brown" (bruns, beiges, camel), "pastel" (rose, bleu ciel…), "dark" (noir, gris foncé, marine) ou "other".
 - category_slug : un de ${JSON.stringify(categories.map((c) => c.slug))} ou null si aucun ne convient.
@@ -82,11 +82,10 @@ function parseDraft(data: unknown, categorySlugs: string[]): ProductDraft {
   const price = money(o.price);
   const oldPrice = money(o.old_price);
   const model = slugify(text(o.model, 80));
-  const colorFr = text(o.color_fr, 40);
   return {
     name,
-    // One product per colour: the slug always ends with the colour so variants never clash.
-    slug: model && colorFr ? slugify(`${model}-${colorFr}`) : slugify(text(o.slug, 80) || name.fr),
+    // One product for all its colours: the slug never contains the colour.
+    slug: slugify(text(o.slug, 80) || model || name.fr),
     model,
     categorySlug: categorySlugs.includes(cat) ? cat : null,
     colorName: l10n(o, "color", 40),

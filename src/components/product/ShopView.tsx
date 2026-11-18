@@ -7,6 +7,7 @@ import { href, paths } from "@/lib/routes";
 import { JsonLd, breadcrumbLd } from "@/lib/jsonld";
 import type { Locale } from "@/lib/locales";
 import type { CategoryDTO, GuideDTO, ProductDTO, Tone } from "@/lib/types";
+import { minPriceOf } from "@/lib/product";
 
 export const SORTS = ["popular", "price-asc", "price-desc"] as const;
 export type Sort = (typeof SORTS)[number];
@@ -21,9 +22,9 @@ export function parseShopParams(sp: Record<string, string | string[] | undefined
 }
 
 export function applyShopParams(products: ProductDTO[], tone: Tone | null, sort: Sort): ProductDTO[] {
-  const list = tone ? products.filter((p) => p.tone === tone) : [...products];
-  if (sort === "price-asc") list.sort((a, b) => a.price - b.price || a.position - b.position);
-  else if (sort === "price-desc") list.sort((a, b) => b.price - a.price || a.position - b.position);
+  const list = tone ? products.filter((p) => p.colors.some((c) => c.tone === tone)) : [...products];
+  if (sort === "price-asc") list.sort((a, b) => minPriceOf(a) - minPriceOf(b) || a.position - b.position);
+  else if (sort === "price-desc") list.sort((a, b) => minPriceOf(b) - minPriceOf(a) || a.position - b.position);
   return list;
 }
 
@@ -43,7 +44,7 @@ type Props = {
 export default function ShopView({ lang, title, intro, basePath, allProducts, categories, activeCategory, tone, sort, guides }: Props) {
   const t = getDictionary(lang);
   const products = applyShopParams(allProducts, tone, sort);
-  const availableTones = TONES.filter((x) => allProducts.some((p) => p.tone === x));
+  const availableTones = TONES.filter((x) => allProducts.some((p) => p.colors.some((c) => c.tone === x)));
   const qs = (next: { tone?: Tone | null; sort?: Sort }) => {
     const p = new URLSearchParams();
     const nt = next.tone === undefined ? tone : next.tone;
@@ -113,7 +114,7 @@ export default function ShopView({ lang, title, intro, basePath, allProducts, ca
       {products.length ? (
         <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4">
           {products.map((p, i) => (
-            <ProductCard key={p.id} product={p} lang={lang} priority={i < 2} headingLevel="h2" />
+            <ProductCard key={p.id} product={p} lang={lang} priority={i < 2} headingLevel="h2" colorKey={tone ? p.colors.find((c) => c.tone === tone)?.key : undefined} />
           ))}
         </div>
       ) : (

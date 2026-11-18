@@ -7,14 +7,16 @@ import { shippingFor, type ShippingSettings } from "./pricing";
 import { loadShippingFresh } from "./data";
 import { isObjectId } from "./validation";
 import { Order, Product } from "@/models";
+import { toProductDTO } from "./mappers";
+import { colorByKey, priceOf } from "./product";
 import type { Locale } from "./locales";
 import type { OrderDTO } from "./types";
 
-export type OrderLineInput = { productId: string; size: number; qty: number };
+export type OrderLineInput = { productId: string; colorKey: string; size: number; qty: number };
 export type CustomerInput = { name: string; phone: string; city: string; address: string; note: string };
 
 /** A line that cannot be served: unknown/inactive product, or not enough stock. */
-export type Problem = { productId: string; size: number; name: string; available: number; reason: "gone" | "stock" };
+export type Problem = { productId: string; colorKey: string; size: number; name: string; available: number; reason: "gone" | "stock" };
 
 export class OrderProblemError extends Error {
   constructor(public problems: Problem[]) {
@@ -65,27 +67,37 @@ async function createDbOrder(lines: OrderLineInput[], customer: CustomerInput, l
         const items: OrderDTO["items"] = [];
 
         for (const line of lines) {
-          const p = products.find((x) => String(x._id) === line.productId);
-          if (!p || !p.active) {
-            problems.push({ ...line, name: p?.name?.[locale] || "?", available: 0, reason: "gone" });
+          const doc = products.find((x) => String(x._id) === line.productId);
+          const p = doc ? toProductDTO(doc) : null;
+          const color = p ? colorByKey(p, line.colorKey) : null;
+          const label = p ? `${p.name[locale] || p.name.fr}${color ? ` — ${color.name[locale] || color.name.fr}` : ""}` : "?";
+          if (!doc || !p || !p.active || !color) {
+            problems.push({ ...line, name: label, available: 0, reason: "gone" });
             continue;
           }
-          const sizeRow = p.sizes.find((s) => s.size === line.size);
+          const sizeRow = color.sizes.find((s) => s.size === line.size);
           if (!sizeRow) {
-            problems.push({ ...line, name: p.name[locale] || p.name.fr, available: 0, reason: "gone" });
+            problems.push({ ...line, name: label, available: 0, reason: "gone" });
             continue;
           }
-          // Atomic: only decrements if this size still has enough stock.
-          const res = await Product.updateOne(
-            { _id: p._id, active: true, sizes: { $elemMatch: { size: line.size, stock: { $gte: line.qty } } } },
-            { $inc: { "sizes.$.stock": -line.qty } },
-            { session },
-          );
+          // Atomic: only decrements if this colour + size still has enough stock.
+          const legacy = !(doc.colors && doc.colors.length);
+          const res = legacy
+            ? await Product.updateOne(
+                { _id: doc._id, active: true, sizes: { $elemMatch: { size: line.size, stock: { $gte: line.qty } } } },
+                { $inc: { "sizes.$.stock": -line.qty } },
+                { session },
+              )
+            : await Product.updateOne(
+                { _id: doc._id, active: true, colors: { $elemMatch: { key: line.colorKey, sizes: { $elemMatch: { size: line.size, stock: { $gte: line.qty } } } } } },
+                { $inc: { "colors.$[c].sizes.$[s].stock": -line.qty } },
+                { session, arrayFilters: [{ "c.key": line.colorKey }, { "s.size": line.size }] },
+              );
           if (res.modifiedCount !== 1) {
-            problems.push({ ...line, name: p.name[locale] || p.name.fr, available: Math.max(0, sizeRow.stock), reason: "stock" });
+            problems.push({ ...line, name: label, available: Math.max(0, sizeRow.stock), reason: "stock" });
             continue;
           }
-          items.push({ productId: String(p._id), slug: p.slug, name: `${p.name.fr}`, size: line.size, qty: line.qty, unitPrice: p.price });
+          items.push({ productId: p.id, slug: p.slug, name: p.name.fr, color: { key: color.key, name: color.name.fr }, size: line.size, qty: line.qty, unitPrice: priceOf(p, color) });
         }
 
         if (problems.length) throw new OrderProblemError(problems); // aborts the transaction
@@ -98,7 +110,7 @@ async function createDbOrder(lines: OrderLineInput[], customer: CustomerInput, l
               status: "nouveau",
               locale,
               customer,
-              items: items.map((i) => ({ product: i.productId, slug: i.slug, name: i.name, size: i.size, qty: i.qty, unitPrice: i.unitPrice })),
+              items: items.map((i) => ({ product: i.productId, slug: i.slug, name: i.name, color: i.color, size: i.size, qty: i.qty, unitPrice: i.unitPrice })),
               ...t,
             },
           ],
@@ -125,17 +137,20 @@ function createDemoOrder(lines: OrderLineInput[], customer: CustomerInput, local
   const problems: Problem[] = [];
   for (const line of lines) {
     const p = store.products.find((x) => x.id === line.productId);
-    const row = p?.sizes.find((s) => s.size === line.size);
-    if (!p || !p.active || !row) problems.push({ ...line, name: p?.name[locale] || "?", available: 0, reason: "gone" });
-    else if (row.stock < line.qty) problems.push({ ...line, name: p.name[locale], available: row.stock, reason: "stock" });
+    const color = p ? colorByKey(p, line.colorKey) : null;
+    const row = color?.sizes.find((s) => s.size === line.size);
+    const label = p ? `${p.name[locale]}${color ? ` — ${color.name[locale]}` : ""}` : "?";
+    if (!p || !p.active || !color || !row) problems.push({ ...line, name: label, available: 0, reason: "gone" });
+    else if (row.stock < line.qty) problems.push({ ...line, name: label, available: row.stock, reason: "stock" });
   }
   if (problems.length) throw new OrderProblemError(problems);
 
   // Single-threaded: check-then-write is atomic here.
   const items: OrderDTO["items"] = lines.map((line) => {
     const p = store.products.find((x) => x.id === line.productId)!;
-    p.sizes.find((s) => s.size === line.size)!.stock -= line.qty;
-    return { productId: p.id, slug: p.slug, name: p.name.fr, size: line.size, qty: line.qty, unitPrice: p.price };
+    const color = colorByKey(p, line.colorKey)!;
+    color.sizes.find((s) => s.size === line.size)!.stock -= line.qty;
+    return { productId: p.id, slug: p.slug, name: p.name.fr, color: { key: color.key, name: color.name.fr }, size: line.size, qty: line.qty, unitPrice: priceOf(p, color) };
   });
   const t = totals(items, shippingSettings);
   let ref = newRef();

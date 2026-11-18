@@ -37,7 +37,7 @@ export default function HeroImageForm({ hero }: { hero: HeroDTO }) {
       </div>
       <div className="space-y-4">
         <p className="text-sm text-muted">
-          L’image en haut de la page d’accueil. Format portrait conseillé (4:5, par ex. 1200 × 1500 px), une photo d’ambiance plutôt qu’une photo produit. Sans image, une illustration Naalora est affichée.
+          L’image en haut de la page d’accueil. Format portrait conseillé (4:5, par ex. 1200 × 1500 px), une photo d’ambiance plutôt qu’une photo produit. Sans image choisie, une photo par défaut est affichée (pantoufles en peluche sur un tapis en fourrure).
         </p>
         <div className="flex flex-wrap gap-2">
           <label className={`btn btn-primary cursor-pointer ${busy ? "pointer-events-none opacity-60" : ""}`}>
@@ -48,7 +48,7 @@ export default function HeroImageForm({ hero }: { hero: HeroDTO }) {
             <button
               type="button"
               className="rounded-full px-4 py-2 text-sm text-accent-dark hover:bg-accent-dark/10"
-              onClick={() => confirm("Revenir à l’illustration par défaut ?") && startTransition(async () => setResult(await setHeroImageAction(null, null)))}
+              onClick={() => confirm("Revenir à la photo par défaut ?") && startTransition(async () => setResult(await setHeroImageAction(null, null)))}
             >
               Revenir à l’image par défaut
             </button>

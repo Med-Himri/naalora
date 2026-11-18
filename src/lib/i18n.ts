@@ -99,7 +99,7 @@ const fr = {
     soon: "Bientôt",
     productsCount: "{count} modèles",
     upcoming: ["Baskets", "Sandales", "Bottes"],
-    heroImageAlt: "Pantoufle plateforme en daim Naalora",
+    heroImageAlt: "Pieds en chaussettes douillettes dans des pantoufles en peluche, sur un tapis en fourrure",
   },
   product: {
     badgeBest: "Best-seller",
@@ -448,7 +448,7 @@ const ar: Dictionary = {
     soon: "قريباً",
     productsCount: "{count} موديلات",
     upcoming: ["أحذية رياضية", "صنادل", "أحذية طويلة"],
-    heroImageAlt: "بلغة Naalora بنعل مرتفع من الجلد السويدي",
+    heroImageAlt: "قدمان بجوارب دافئة في بلغة ناعمة من الفرو، على سجادة من الفرو",
   },
   product: {
     badgeBest: "الأكثر مبيعاً",

@@ -37,7 +37,7 @@ Toutes les sections du cahier des charges sont codées. Chaque étape passe `npm
 - **Produits multi-couleurs** : un produit = plusieurs couleurs. Chaque couleur a ses photos (12 max), ses tailles et son stock, et un prix facultatif. Sur la fiche, le client choisit la couleur : photos, prix, stock et tailles changent ; l’URL garde la couleur (`?couleur=rose`). Panier, commande (stock décrémenté par couleur + taille, de façon atomique), annulation (remise en stock dans la bonne couleur), admin (éditeur de couleurs + photos par couleur), JSON-LD `ProductGroup`, flux Merchant (un article par couleur) et IA mis à jour.
 - **Migration** `npm run migrate` (aussi lancée par `npm run seed`) : fusionne les anciens produits « un par couleur » partageant un code modèle. ⚠️ Non testée sur une vraie base MongoDB (pas de MongoDB dans l’environnement de développement) — faire une sauvegarde Atlas avant de la lancer.
 
-- **Image d’accueil fixe** : le haut de la page d’accueil n’utilise plus une photo produit. Par défaut, une illustration Naalora (arche marocaine + pantoufles, `public/hero/naalora-hero.webp`) ; votre propre photo s’ajoute dans Admin → Réglages → Image d’accueil (Cloudinary, dossier `naalora/site`), avec texte alternatif FR/AR et retour à l’image par défaut.
+- **Image d’accueil fixe** : le haut de la page d’accueil n’utilise plus une photo produit. Par défaut, une vraie photo libre de droits (Pexels n° 6633363, pantoufles en peluche sur tapis en fourrure — voir `public/hero/CREDITS.md`) ; votre propre photo s’ajoute dans Admin → Réglages → Image d’accueil (Cloudinary, dossier `naalora/site`), avec texte alternatif FR/AR et retour à l’image par défaut.
 
 ## En cours / non vérifié
 

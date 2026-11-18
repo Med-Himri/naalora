@@ -24,7 +24,7 @@ export async function GET() {
     "",
     "## Faits clés",
     `- Livraison : partout au Maroc, en ${h.min}–${h.max} h (${d.min} à ${d.max} jours).`,
-    `- Livraison : ${shippingTexts("fr", shipping).shipSentence}`,
+    `- Frais de livraison : ${shippingTexts("fr", shipping).shipSentence}`,
     "- Paiement : en espèces à la livraison (pas de paiement par carte en ligne).",
     `- Échange de taille : gratuit pendant ${SITE.exchangeDays} jours après réception (article non porté, emballage d’origine).`,
     `- Pointures : ${SITE.sizeChart.map((r) => `${r.size} = ${String(r.cm).replace(".", ",")} cm`).join(", ")}. Entre deux tailles : prendre la taille au-dessus.`,

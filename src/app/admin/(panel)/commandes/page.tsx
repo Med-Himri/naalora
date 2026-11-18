@@ -1,7 +1,7 @@
 import Link from "next/link";
 import OrderStatusForm from "@/components/admin/OrderStatusForm";
 import { STATUS_LABELS, STATUS_STYLES } from "@/components/admin/status";
-import { WhatsAppIcon, PhoneIcon } from "@/components/icons";
+import { PhoneIcon } from "@/components/icons";
 import { listOrders, ORDER_STATUS_VALUES } from "@/lib/admin/repo";
 import { getDictionary } from "@/lib/i18n";
 import { fmt, formatPrice } from "@/lib/format";
@@ -99,7 +99,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                       </dl>
                       <div className="mt-4 flex flex-wrap gap-2">
                         <a href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(wa)}`} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp !min-h-10 !py-2 text-sm">
-                          <WhatsAppIcon width={18} height={18} /> Confirmer sur WhatsApp
+                          Confirmer sur WhatsApp
                         </a>
                         <a href={`tel:${o.customer.phone}`} className="btn btn-outline !min-h-10 !py-2 text-sm"><PhoneIcon width={16} height={16} /> Appeler</a>
                       </div>

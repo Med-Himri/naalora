@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { MailIcon, PinIcon, WhatsAppIcon } from "@/components/icons";
+import { ChatIcon, MailIcon, PinIcon } from "@/components/icons";
 import { getDictionary } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
 import { SITE, displayPhone, whatsappLink } from "@/lib/site";
@@ -37,12 +37,12 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/a-propos"
             </section>
           ))}
         </div>
-        <section className="mt-10 rounded-[24px] bg-ink p-7 text-paper" aria-labelledby="contact-title">
+        <section className="surface-dark mt-10 rounded-[24px] bg-ink p-7 text-paper" aria-labelledby="contact-title">
           <h2 id="contact-title" className="text-3xl">{t.about.contactTitle}</h2>
           <p className="mt-2 text-paper/75">{t.about.contactText}</p>
           <dl className="mt-6 grid gap-4 sm:grid-cols-3">
             <div>
-              <dt className="flex items-center gap-2 text-sm text-paper/60"><WhatsAppIcon width={16} height={16} /> {t.about.whatsapp}</dt>
+              <dt className="flex items-center gap-2 text-sm text-paper/60"><ChatIcon width={16} height={16} /> {t.about.whatsapp}</dt>
               <dd className="mt-1"><a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline" dir="ltr">{displayPhone()}</a></dd>
             </div>
             <div>

@@ -49,7 +49,7 @@ export function Section({ title, children }: { title: string; children: React.Re
 export function Notice({ result }: { result: { ok: boolean; message: string } | null }) {
   if (!result) return null;
   return (
-    <p role={result.ok ? "status" : "alert"} className={`rounded-2xl px-4 py-3 text-sm font-medium ${result.ok ? "bg-[#17834a]/10 text-[#17834a]" : "bg-accent-dark/10 text-accent-dark"}`}>
+    <p role={result.ok ? "status" : "alert"} className={`rounded-2xl px-4 py-3 text-sm font-medium ${result.ok ? "bg-success/10 text-success" : "bg-accent-dark/10 text-accent-dark"}`}>
       {result.message}
     </p>
   );

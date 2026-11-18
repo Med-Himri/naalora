@@ -108,7 +108,7 @@ export default async function ProductPage({ params }: PageProps<"/[lang]/produit
 
           <div className="mt-6">
             <Price price={product.price} oldPrice={product.oldPrice} lang={lang} saveLabel={t.product.save} size="lg" />
-            <p className={`mt-2 flex items-center gap-2 text-sm font-medium ${stock <= 0 ? "text-muted" : "text-[#17834a]"}`}>
+            <p className={`mt-2 flex items-center gap-2 text-sm font-medium ${stock <= 0 ? "text-muted" : "text-success"}`}>
               <span className={`h-2 w-2 rounded-full ${stock <= 0 ? "bg-muted" : "bg-whatsapp"}`} aria-hidden="true" />
               {stockLine}
             </p>

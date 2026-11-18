@@ -47,7 +47,7 @@ const fr = {
     openCart: "Ouvrir le panier",
     cartCount: "{count} article(s) dans le panier",
     closeCart: "Fermer le panier",
-    whatsapp: "Nous écrire sur WhatsApp",
+    theme: "Changer de thème (clair / sombre)",
     switchLang: "Lire en arabe",
     breadcrumb: "Fil d’Ariane",
     home: "Accueil Naalora",
@@ -359,7 +359,6 @@ const fr = {
   ],
   orderConfirmMessage: `Bonjour {name}, ici Naalora 👋\nNous confirmons votre commande {ref} :\n{items}\nTotal : {total} (paiement à la livraison).\nLivraison à {city} sous ${h.min}–${h.max} h. Merci de votre confiance !`,
   breadcrumbHome: "Accueil",
-  whatsappFloat: "Une question ? WhatsApp",
 };
 
 export type Dictionary = typeof fr;
@@ -393,7 +392,7 @@ const ar: Dictionary = {
     openCart: "فتح السلة",
     cartCount: "{count} منتج في السلة",
     closeCart: "إغلاق السلة",
-    whatsapp: "راسلنا على واتساب",
+    theme: "تغيير المظهر (فاتح / داكن)",
     switchLang: "Lire en français",
     breadcrumb: "مسار التنقل",
     home: "الصفحة الرئيسية Naalora",
@@ -705,7 +704,6 @@ const ar: Dictionary = {
   ],
   orderConfirmMessage: `السلام عليكم {name}، معك Naalora 👋\nنؤكد طلبك {ref}:\n{items}\nالمجموع: {total} (الدفع عند الاستلام).\nالتوصيل إلى {city} خلال ${h.min}–${h.max} ساعة. شكراً لثقتك!`,
   breadcrumbHome: "الرئيسية",
-  whatsappFloat: "سؤال؟ واتساب",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { fr, ar };

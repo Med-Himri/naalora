@@ -19,13 +19,9 @@ Ouvrez http://localhost:3000. Sans `MONGODB_URI`, le site tourne en **mode démo
 
 ### Catalogue de test (photos locales)
 
-Pour tester avec de vraies photos sans base de données, placez des images JPG dans `public/test-photos/` (dossier ignoré par Git) puis lancez :
+Pour tester avec de vraies photos sans base de données, placez les images JPG dans `public/test-photos/` (dossier ignoré par Git) puis lancez `npm run dev` : le catalogue de test s’active tout seul. Le terminal affiche une ligne `[naalora] …` qui confirme le mode utilisé.
 
-```bash
-NAALORA_TEST_CATALOG=1 npm run dev
-```
-
-La liste des produits de test et les noms de fichiers attendus sont dans `src/lib/test-catalog.ts`. Ce mode n’existe qu’en mode démo.
+Ce mode n’existe que **sans** `MONGODB_URI`. Pour le couper : `NAALORA_TEST_CATALOG=0` dans `.env.local`. La liste des produits de test et les noms de fichiers attendus sont dans `src/lib/test-catalog.ts`.
 
 ## Variables d’environnement
 

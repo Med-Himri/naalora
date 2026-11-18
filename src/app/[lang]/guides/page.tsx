@@ -38,7 +38,7 @@ export default async function GuidesPage({ params }: PageProps<"/[lang]/guides">
 
       <ul className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         <li>
-          <Link href={href(lang, paths.sizeGuide)} className="group flex h-full flex-col rounded-[20px] bg-ink p-6 text-paper shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
+          <Link href={href(lang, paths.sizeGuide)} className="surface-dark group flex h-full flex-col rounded-[20px] bg-ink p-6 text-paper shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
             <h2 className="text-2xl">{t.sizeGuide.title}</h2>
             <p className="mt-2 flex-1 text-sm leading-relaxed text-paper/75">{t.sizeGuide.intro}</p>
             <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold">{t.guides.readMore} <ArrowIcon width={16} height={16} className="rtl:rotate-180" /></span>

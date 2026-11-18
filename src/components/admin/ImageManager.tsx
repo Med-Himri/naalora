@@ -16,7 +16,7 @@ function AltForm({ productId, img }: { productId: string; img: ProductImageDTO }
       <input name="alt_fr" defaultValue={img.alt.fr} placeholder="Texte alternatif (FR)" className="field !py-2 text-sm" aria-label="Texte alternatif (FR)" />
       <input name="alt_ar" defaultValue={img.alt.ar} placeholder="النص البديل (AR)" dir="rtl" className="field !py-2 text-sm" aria-label="Texte alternatif (AR)" />
       <button className="rounded-full bg-sand px-3 py-1.5 text-xs font-medium hover:bg-line" disabled={pending}>{pending ? "…" : "Enregistrer le texte"}</button>
-      {state && <span className={`ms-2 text-xs ${state.ok ? "text-[#17834a]" : "text-accent-dark"}`}>{state.message}</span>}
+      {state && <span className={`ms-2 text-xs ${state.ok ? "text-success" : "text-accent-dark"}`}>{state.message}</span>}
     </form>
   );
 }

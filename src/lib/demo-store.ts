@@ -1,6 +1,6 @@
 import "server-only";
 import { seedCategories, seedGuides, seedProducts } from "./seed-data";
-import { applyTestCatalog, testCatalogEnabled } from "./test-catalog";
+import { applyTestCatalog, testCatalogEnabled, testPhotosDir, testPhotosFound } from "./test-catalog";
 import type { CategoryDTO, GuideDTO, OrderDTO, ProductDTO } from "./types";
 
 /**
@@ -57,6 +57,12 @@ function build(): Store {
   }));
   const store = { categories, products, guides, orders: [] as OrderDTO[] };
   if (testCatalogEnabled) applyTestCatalog(store);
+  // One line in the terminal so it is clear which data the site shows.
+  console.info(
+    `[naalora] Mode démo (pas de MONGODB_URI) — catalogue de test : ${
+      testCatalogEnabled ? "ACTIVÉ (photos de public/test-photos)" : testPhotosFound ? "désactivé (NAALORA_TEST_CATALOG=0)" : `désactivé : aucune photo trouvée dans ${testPhotosDir}`
+    }`,
+  );
   return store;
 }
 

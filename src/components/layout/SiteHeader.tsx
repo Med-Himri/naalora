@@ -5,16 +5,17 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Logo from "./Logo";
 import { useCart } from "../cart/CartProvider";
-import { BagIcon, CloseIcon, MenuIcon, WhatsAppIcon } from "../icons";
+import { BagIcon, CloseIcon, MenuIcon } from "../icons";
+import ThemeToggle from "./ThemeToggle";
 import { fmt, type Lang } from "@/lib/format";
 import { switchLangPath } from "@/lib/routes";
 
 export type HeaderTexts = {
   nav: { home: string; shop: string; guides: string; faq: string; about: string; sizeGuide: string; menu: string; langShort: string; langCurrent: string };
-  a11y: { mainNav: string; openMenu: string; closeMenu: string; openCart: string; cartCount: string; whatsapp: string; switchLang: string; home: string };
+  a11y: { mainNav: string; openMenu: string; closeMenu: string; openCart: string; cartCount: string; theme: string; switchLang: string; home: string };
 };
 
-export default function SiteHeader({ lang, t, whatsappHref }: { lang: Lang; t: HeaderTexts; whatsappHref: string }) {
+export default function SiteHeader({ lang, t }: { lang: Lang; t: HeaderTexts }) {
   const pathname = usePathname() || `/${lang}`;
   const { count, open, bump } = useCart();
   const [scrolled, setScrolled] = useState(false);
@@ -104,9 +105,7 @@ export default function SiteHeader({ lang, t, whatsappHref }: { lang: Lang; t: H
             <span className={`rounded-full px-3 py-1.5 ${lang === "fr" ? "bg-paper shadow-soft" : "text-ink/60"}`}>FR</span>
             <span className={`rounded-full px-3 py-1.5 ${lang === "ar" ? "bg-paper shadow-soft" : "text-ink/60"}`} style={{ fontFamily: "var(--font-arabic)" }}>ع</span>
           </Link>
-          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" aria-label={t.a11y.whatsapp} className={`${iconBtn} hidden sm:grid`}>
-            <WhatsAppIcon className="text-whatsapp" />
-          </a>
+          <ThemeToggle label={t.a11y.theme} className={iconBtn} />
           <button type="button" onClick={open} className={iconBtn} aria-label={`${t.a11y.openCart} — ${fmt(t.a11y.cartCount, { count })}`}>
             <BagIcon />
             {count > 0 && (
@@ -157,9 +156,6 @@ export default function SiteHeader({ lang, t, whatsappHref }: { lang: Lang; t: H
           <Link href={switchLangPath(pathname, other)} onClick={setLangCookie} hrefLang={other} lang={other} className="btn btn-outline flex-1 !min-h-11 !py-2">
             {lang === "fr" ? "العربية" : "Français"}
           </Link>
-          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp flex-1 !min-h-11 !py-2">
-            <WhatsAppIcon width={18} height={18} /> WhatsApp
-          </a>
         </div>
       </div>
     </header>

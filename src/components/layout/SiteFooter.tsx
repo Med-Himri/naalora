@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Logo from "./Logo";
-import { WhatsAppIcon, MailIcon, PinIcon } from "../icons";
+import { ChatIcon, MailIcon, PinIcon } from "../icons";
 import { getDictionary } from "@/lib/i18n";
 import { getCategories } from "@/lib/data";
 import { SITE, displayPhone, whatsappLink } from "@/lib/site";
@@ -12,7 +12,7 @@ export default async function SiteFooter({ lang }: { lang: Locale }) {
   const categories = await getCategories();
   const linkCls = "text-paper/75 transition hover:text-paper";
   return (
-    <footer className="mt-24 bg-ink text-paper">
+    <footer className="surface-dark mt-24 bg-ink text-paper">
       <div className="container-page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div>
           <Link href={href(lang)} aria-label={t.a11y.home} className="inline-block rounded-xl">
@@ -43,7 +43,7 @@ export default async function SiteFooter({ lang }: { lang: Locale }) {
           <ul className="mt-4 space-y-3 text-sm">
             <li>
               <a className={`${linkCls} inline-flex items-center gap-2`} href={whatsappLink()} target="_blank" rel="noopener noreferrer">
-                <WhatsAppIcon width={18} height={18} /> <span dir="ltr">{displayPhone()}</span>
+                <ChatIcon width={18} height={18} /> <span>WhatsApp</span> <span dir="ltr">{displayPhone()}</span>
               </a>
             </li>
             <li>

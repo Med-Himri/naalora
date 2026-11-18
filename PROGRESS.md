@@ -24,6 +24,10 @@ Toutes les sections du cahier des charges sont codées. Chaque étape passe `npm
 - **Catalogue de test avec de vraies photos** (mode démo uniquement, `NAALORA_TEST_CATALOG=1`) : photos fournisseur recadrées en 4:5 dans `public/test-photos/` (**exclu de Git, jamais déployé**). Il ajoute une catégorie « Bottes & bottines » (902 ×3 couleurs, 911, 948), la pantoufle JR-26 (×3 couleurs) et remplace les illustrations des 6 pantoufles plateforme. Les prix des nouveaux modèles sont provisoires.
 - ⚠️ **À ne pas publier tel quel** : les pantoufles plateforme portent le logo **UGG** et la botte 948 imite le motif « Oblique » de Dior. Vendre ou photographier des articles portant la marque d’un autre est de la contrefaçon (et interdit par Google Merchant Center). Avant la mise en ligne : stock sans logo et photos propres.
 
+- **Mode clair / sombre** : bouton soleil/lune dans l’en-tête (à la place de l’icône WhatsApp). Le choix est gardé dans le navigateur ; sinon le réglage du système est suivi. Aucun flash au chargement.
+- **Icônes WhatsApp retirées** (en-tête, bouton flottant, menu mobile, icônes des liens). Les liens WhatsApp restent en texte (pied de page, FAQ, À propos, page de remerciement, admin).
+- **Catalogue de test automatique** : en mode démo, il s’active tout seul si `public/test-photos/` contient les photos (`NAALORA_TEST_CATALOG=0` pour le couper). Le terminal affiche une ligne `[naalora] …` qui dit quel mode est utilisé.
+
 ## En cours / non vérifié
 
 - **MongoDB réel non testé** : aucun MongoDB n’était disponible pendant le développement. Le seed, la transaction de commande et les écritures de l’admin sur MongoDB n’ont été vérifiés que par TypeScript. Le même parcours a été testé de bout en bout en mode démo.

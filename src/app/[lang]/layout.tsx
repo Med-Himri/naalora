@@ -6,19 +6,21 @@ import type { Metadata, Viewport } from "next";
 import { defaultLocale, dirOf, isLocale, locales } from "@/lib/locales";
 import { SITE } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n";
-import { whatsappLink } from "@/lib/site";
 import { CartProvider } from "@/components/cart/CartProvider";
 import CartDrawer from "@/components/cart/CartDrawer";
 import SiteHeader from "@/components/layout/SiteHeader";
 import SiteFooter from "@/components/layout/SiteFooter";
-import WhatsAppFloat from "@/components/layout/WhatsAppFloat";
+import { themeScript } from "@/components/layout/ThemeToggle";
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
 }
 
 export const viewport: Viewport = {
-  themeColor: "#f7f0e6",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f0e6" },
+    { media: "(prefers-color-scheme: dark)", color: "#17130f" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
@@ -42,7 +44,11 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
   const t = getDictionary(lang);
   // suppressHydrationWarning: browser extensions (Grammarly…) add attributes to <html>/<body> before React loads.
   return (
-    <html lang={lang} dir={dirOf(lang)} suppressHydrationWarning>
+    <html lang={lang} dir={dirOf(lang)} data-theme="light" suppressHydrationWarning>
+      <head>
+        {/* Sets light/dark before the first paint (no flash). */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="flex min-h-dvh flex-col" suppressHydrationWarning>
         <a
           href="#main"
@@ -51,10 +57,9 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
           {t.a11y.skip}
         </a>
         <CartProvider>
-          <SiteHeader lang={lang} t={{ nav: t.nav, a11y: t.a11y }} whatsappHref={whatsappLink()} />
+          <SiteHeader lang={lang} t={{ nav: t.nav, a11y: t.a11y }} />
           <main id="main" className="min-h-[60vh]">{children}</main>
           <SiteFooter lang={lang} />
-          <WhatsAppFloat href={whatsappLink()} label={t.whatsappFloat} ariaLabel={t.a11y.whatsapp} />
           <CartDrawer
             lang={lang}
             t={{

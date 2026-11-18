@@ -1,12 +1,18 @@
 import "server-only";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import type { CategoryDTO, L10n, ProductDTO, Tone } from "./types";
 
 /**
- * TEST ONLY — demo mode with NAALORA_TEST_CATALOG=1.
+ * TEST ONLY — demo mode (no MONGODB_URI).
  * Uses supplier photos from public/test-photos (git-ignored, never deployed).
+ * On automatically when the photos are there; NAALORA_TEST_CATALOG=0 turns it off, =1 forces it on.
  * Prices of the new models are placeholders: set the real ones in the admin.
  */
-export const testCatalogEnabled = process.env.NAALORA_TEST_CATALOG === "1";
+const flag = process.env.NAALORA_TEST_CATALOG;
+export const testPhotosDir = path.join(process.cwd(), "public", "test-photos");
+export const testPhotosFound = existsSync(path.join(testPhotosDir, "platform-noir.jpg"));
+export const testCatalogEnabled = flag === "1" || (flag !== "0" && testPhotosFound);
 
 type Store = { categories: CategoryDTO[]; products: ProductDTO[] };
 

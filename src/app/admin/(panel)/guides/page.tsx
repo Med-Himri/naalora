@@ -24,7 +24,7 @@ export default async function AdminGuidesPage() {
             <form action={toggleGuidePublished}>
               <input type="hidden" name="id" value={g.id} />
               <input type="hidden" name="published" value={String(!g.published)} />
-              <button className={`rounded-full px-4 py-2 text-sm font-medium ${g.published ? "bg-[#17834a]/10 text-[#17834a]" : "bg-sand"}`}>
+              <button className={`rounded-full px-4 py-2 text-sm font-medium ${g.published ? "bg-success/10 text-success" : "bg-sand"}`}>
                 {g.published ? "Publié ✓" : "Brouillon — publier"}
               </button>
             </form>

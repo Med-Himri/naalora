@@ -1,6 +1,7 @@
 export default function Logo({ variant = "dark", className = "" }: { variant?: "dark" | "light"; className?: string }) {
-  const box = variant === "dark" ? "#2b2420" : "#fffdf9";
-  const n = variant === "dark" ? "#fffdf9" : "#2b2420";
+  // Theme tokens, so the logo follows light / dark mode.
+  const box = variant === "dark" ? "var(--color-ink)" : "var(--color-paper)";
+  const n = variant === "dark" ? "var(--color-paper)" : "var(--color-ink)";
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <svg viewBox="0 0 64 64" width="36" height="36" aria-hidden="true" className="shrink-0">

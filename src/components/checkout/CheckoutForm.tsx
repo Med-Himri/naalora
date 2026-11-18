@@ -7,7 +7,7 @@ import { placeOrder, type CheckoutState } from "@/app/[lang]/commande/actions";
 import { useCart } from "../cart/CartProvider";
 import QtyStepper from "../cart/QtyStepper";
 import type { CartItem } from "../cart/cart-store";
-import { CashIcon, CheckIcon, WhatsAppIcon } from "../icons";
+import { CashIcon, CheckIcon } from "../icons";
 import { fmt, formatPrice, type Lang } from "@/lib/format";
 import { MAX_QTY_PER_LINE, shippingFor } from "@/lib/pricing";
 
@@ -68,13 +68,13 @@ export default function CheckoutForm({ lang, t, cities, whatsappNumber }: Props)
     const msg = fmt(t.thanks.waMessage, { ref: done.ref, total, items: lines, name: done.name, city: done.city });
     return (
       <div className="mx-auto max-w-xl animate-fade-up rounded-[24px] bg-paper p-6 text-center shadow-lift sm:p-10" role="status">
-        <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-whatsapp/15 text-[#17834a]"><CheckIcon width={30} height={30} /></span>
+        <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-whatsapp/15 text-success"><CheckIcon width={30} height={30} /></span>
         <h1 className="mt-5 text-3xl sm:text-4xl">{t.thanks.title}</h1>
         <p className="mt-4 text-sm text-muted">{t.thanks.ref}</p>
         <p className="mt-1 font-mono text-2xl font-bold tracking-widest" dir="ltr">{done.ref}</p>
         <p className="mt-4 leading-relaxed text-ink/80">{fmt(t.thanks.text, { total })}</p>
         <a href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp mt-7 w-full">
-          <WhatsAppIcon width={20} height={20} /> {t.thanks.whatsapp}
+          {t.thanks.whatsapp}
         </a>
         <p className="mt-2 text-xs text-muted">{t.thanks.whatsappHelp}</p>
         <Link href={`/${lang}/boutique`} className="btn btn-outline mt-5 w-full">{t.thanks.back}</Link>

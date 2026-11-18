@@ -60,7 +60,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                     <li key={p.id}>
                       <Link
                         href={href(lang, paths.product(p.slug))}
-                        className="block h-7 w-7 rounded-full border-2 border-sand transition hover:-translate-y-0.5"
+                        className="block h-7 w-7 rounded-full border-2 border-sand ring-1 ring-ink/25 transition hover:-translate-y-0.5"
                         style={{ background: p.swatchHex }}
                         aria-label={fmt(t.a11y.colorLink, { name: p.colorName[lang] })}
                         title={p.colorName[lang]}
@@ -143,14 +143,14 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       )}
 
       {/* Dark features section */}
-      <section className="mt-24 bg-ink py-16 text-paper sm:py-20" aria-labelledby="features-title">
+      <section className="surface-dark mt-24 bg-ink py-16 text-paper sm:py-20" aria-labelledby="features-title">
         <div className="container-page">
-          <p className="eyebrow !text-[#e9a58a]">{t.home.featuresEyebrow}</p>
+          <p className="eyebrow !text-on-dark-accent">{t.home.featuresEyebrow}</p>
           <h2 id="features-title" className="mt-3 max-w-xl text-3xl sm:text-4xl">{t.home.featuresTitle}</h2>
           <ul className="mt-10 grid gap-4 sm:grid-cols-3">
             {t.home.features.map((f) => (
               <li key={f.title} className="rounded-[20px] border border-paper/10 bg-paper/5 p-6">
-                <SparkIcon className="text-[#e9a58a]" />
+                <SparkIcon className="text-on-dark-accent" />
                 <h3 className="mt-4 text-xl">{f.title}</h3>
                 <p className="mt-2 leading-relaxed text-paper/75">{f.text}</p>
               </li>

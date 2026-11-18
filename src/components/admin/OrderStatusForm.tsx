@@ -29,7 +29,7 @@ export default function OrderStatusForm({ id, status }: { id: string; status: Or
         {(Object.keys(STATUS_LABELS) as OrderStatus[]).map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
       </select>
       {pending && <span className="text-sm text-muted">Enregistrement…</span>}
-      {state && <span role="status" className={`text-sm ${state.ok ? "text-[#17834a]" : "text-accent-dark"}`}>{state.message}</span>}
+      {state && <span role="status" className={`text-sm ${state.ok ? "text-success" : "text-accent-dark"}`}>{state.message}</span>}
     </form>
   );
 }

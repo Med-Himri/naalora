@@ -38,7 +38,7 @@ export default async function AdminProductsPage() {
               <form action={toggleProductActive}>
                 <input type="hidden" name="id" value={p.id} />
                 <input type="hidden" name="active" value={String(!p.active)} />
-                <button className={`rounded-full px-4 py-2 text-sm font-medium ${p.active ? "bg-[#17834a]/10 text-[#17834a]" : "bg-sand text-ink"}`}>
+                <button className={`rounded-full px-4 py-2 text-sm font-medium ${p.active ? "bg-success/10 text-success" : "bg-sand text-ink"}`}>
                   {p.active ? "Actif ✓" : "Inactif"}
                 </button>
               </form>

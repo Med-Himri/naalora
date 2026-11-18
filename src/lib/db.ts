@@ -4,6 +4,14 @@ import mongoose from "mongoose";
 /** Demo mode: no MONGODB_URI → the site runs on in-memory seed data. */
 export const isDemo = !process.env.MONGODB_URI;
 
+if (!isDemo && process.env.NODE_ENV !== "production") {
+  const gl = globalThis as unknown as { __naaloraModeLogged?: boolean };
+  if (!gl.__naaloraModeLogged) {
+    gl.__naaloraModeLogged = true;
+    console.info("[naalora] Mode MongoDB (MONGODB_URI défini) — les photos de test ne sont pas utilisées. Pour les voir, commentez MONGODB_URI dans .env.local.");
+  }
+}
+
 type Cache = { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
 const g = globalThis as unknown as { __naaloraMongo?: Cache };
 const cache: Cache = g.__naaloraMongo ?? (g.__naaloraMongo = { conn: null, promise: null });

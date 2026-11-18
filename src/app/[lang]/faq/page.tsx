@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import FaqList from "@/components/ui/FaqList";
-import { WhatsAppIcon } from "@/components/icons";
 import { getDictionary } from "@/lib/i18n";
 import { isLocale } from "@/lib/locales";
 import { fmt, formatDate } from "@/lib/format";
@@ -41,7 +40,7 @@ export default async function FaqPage({ params }: PageProps<"/[lang]/faq">) {
             <p className="font-display text-xl">{t.faq.more}</p>
             <p className="mt-1 text-ink/80">{t.faq.moreText}</p>
           </div>
-          <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp"><WhatsAppIcon width={18} height={18} /> WhatsApp</a>
+          <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp">WhatsApp</a>
         </div>
       </div>
     </div>

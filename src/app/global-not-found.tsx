@@ -18,8 +18,8 @@ export default function GlobalNotFound() {
   const fr = getDictionary("fr").notFound;
   const ar = getDictionary("ar").notFound;
   return (
-    <html lang="fr">
-      <body className="min-h-dvh">
+    <html lang="fr" suppressHydrationWarning>
+      <body className="min-h-dvh" suppressHydrationWarning>
         <main id="main" className="container-page flex min-h-dvh flex-col items-center justify-center py-16 text-center">
           <Link href="/fr" aria-label="Naalora">
             <Image src="/naalora-logo.svg" alt="Naalora" width={180} height={44} priority />

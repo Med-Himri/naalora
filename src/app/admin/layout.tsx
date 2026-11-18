@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" dir="ltr">
-      <body className="min-h-dvh">{children}</body>
+    <html lang="fr" dir="ltr" suppressHydrationWarning>
+      <body className="min-h-dvh" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

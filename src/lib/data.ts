@@ -52,7 +52,16 @@ export const getShippingSettings = isDemo
   ? loadShippingFresh
   : unstable_cache(loadShippingFresh, ["naalora-shipping"], { tags: [TAGS.settings], revalidate: 3600 });
 
-const getCatalog = isDemo ? loadCatalogFresh : unstable_cache(loadCatalogFresh, ["naalora-catalog"], { tags: [TAGS.catalog], revalidate: 3600 });
+// Bump CATALOG_CACHE_VERSION whenever the product format changes, so old cached copies are ignored.
+const CATALOG_CACHE_VERSION = "v2-colors";
+const getCatalogCached = unstable_cache(loadCatalogFresh, [`naalora-catalog-${CATALOG_CACHE_VERSION}`], { tags: [TAGS.catalog], revalidate: 3600 });
+
+/** Cached catalog, with a safety net: a cached copy in an old format is never used. */
+async function getCatalog(): Promise<Catalog> {
+  if (isDemo) return loadCatalogFresh();
+  const cached = await getCatalogCached();
+  return cached.products.every((p) => Array.isArray(p.colors) && p.colors.length > 0) ? cached : loadCatalogFresh();
+}
 const getGuidesCached = isDemo ? loadGuidesFresh : unstable_cache(loadGuidesFresh, ["naalora-guides"], { tags: [TAGS.guides], revalidate: 3600 });
 
 /* ---------- Storefront reads (cached) ---------- */
